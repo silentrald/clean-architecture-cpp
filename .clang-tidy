@@ -1,0 +1,14 @@
+---
+Checks: >
+  *,
+  -altera-*,
+  -android-*,
+  -boost-*,
+  -fuchsia-*,
+  -llvmlibc-*,
+  -google-*,
+  -readability-identifier-length,
+  -modernize-use-trailing-return-type,
+  -*-easily-swappable-parameters,
+  -*-non-private-member-variables-in-classes,
+  -*-vararg
