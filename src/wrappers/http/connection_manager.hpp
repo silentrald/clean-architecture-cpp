@@ -12,13 +12,13 @@
 #define HTTP_CONNECTION_MANAGER_HPP
 
 #include "connection.hpp"
-#include <set>
+#include <unordered_set>
 
 namespace http::server {
 
 class connection_manager {
 private:
-  std::set<connection_ptr> connections;
+  std::unordered_set<connection_ptr> connections;
 
 public:
   connection_manager() = default;

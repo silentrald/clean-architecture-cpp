@@ -42,7 +42,10 @@ struct response {
   std::vector<header> headers;
   std::vector<cookie> cookies;
   std::string content{};
+  std::string content_length = "0";
 
+  void set_content(const std::string& content);
+  void set_content(const char* content);
   std::vector<asio::const_buffer> to_buffers();
   static response stock_response(status_type status);
 };

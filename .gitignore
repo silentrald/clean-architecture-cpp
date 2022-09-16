@@ -6,10 +6,13 @@ external
 
 # Cache
 .cache
+cookie.txt
 
 # Build
 build
 dist
+debug
+release
 
 # Environment Variables
 .env

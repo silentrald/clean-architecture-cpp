@@ -9,7 +9,10 @@
 //
 
 #include "server.hpp"
+#include "asio/error_code.hpp"
+#include "asio/ip/tcp.hpp"
 #include <csignal>
+#include <iostream>
 #include <utility>
 
 namespace http::server {
@@ -19,7 +22,10 @@ server::server(
     const std::vector<router>& routers, const std::string& base_path,
     uint num_threads
 )
-    : ctx(1), signals(this->ctx), acceptor(this->ctx), num_threads(num_threads),
+    : ctx(1),
+      signals(this->ctx),
+      acceptor(this->ctx),
+      num_threads(num_threads),
       handler(request_handler(routers, base_path)) {
   this->signals.add(SIGINT);
   this->signals.add(SIGTERM);
@@ -35,8 +41,10 @@ server::server(
 
   asio::ip::tcp::resolver resolver(this->ctx);
   asio::ip::tcp::endpoint endpoint = *resolver.resolve(address, port).begin();
+
   acceptor.open(endpoint.protocol());
   acceptor.set_option(asio::ip::tcp::acceptor::reuse_address(true));
+  acceptor.set_option(asio::ip::tcp::acceptor::keep_alive(true));
   acceptor.bind(endpoint);
   acceptor.listen();
 

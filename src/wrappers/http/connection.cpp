@@ -9,12 +9,21 @@
 //
 
 #include "connection.hpp"
+#include "asio/buffer.hpp"
+#include "asio/error.hpp"
+#include "asio/error_code.hpp"
+#include "asio/impl/read_until.hpp"
+#include "asio/read.hpp"
+#include "asio/read_until.hpp"
+#include "asio/socket_base.hpp"
+#include "asio/write.hpp"
 #include "connection_manager.hpp"
 #include "request_handler.hpp"
 #include "wrappers/http/cookie.hpp"
 #include "wrappers/http/request.hpp"
 #include <cstddef>
 #include <iostream>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -31,7 +40,7 @@ connection::connection(
       buffer() {}
 
 void connection::start() {
-  do_read();
+  this->do_read();
 }
 
 void connection::stop() {
@@ -89,6 +98,8 @@ void connection::handle_header_buffer(std::size_t bytes_transferred) {
       }
     }
 
+    // Keep Alive
+
     // Get the remaining content
     uint body_size = bytes_transferred + (this->buffer.data() - it);
     if (this->socket.available() == 0) {
@@ -107,7 +118,7 @@ void connection::handle_header_buffer(std::size_t bytes_transferred) {
   } else if (result == request_parser::bad) {
     this->res = response::stock_response(response::bad_request);
     this->do_write();
-  } else {
+  } else { // Indeterminate
     // Still read the header value
     this->do_read();
   }
@@ -130,19 +141,37 @@ void connection::handle_body_buffer(std::size_t bytes_transferred) {
 }
 
 void connection::do_read() {
-  auto self(shared_from_this());
+  /* auto self(shared_from_this()); */
+
+  /* asio::async_read_until( */
+  /* this->socket, this->stream_buff, "\r\n\r\n", */
   this->socket.async_read_some(
       asio::buffer(this->buffer),
-      [this, self](std::error_code ec, std::size_t bytes_transferred) {
+      [this](std::error_code ec, std::size_t bytes_transferred) {
         if (!ec) {
-          this->res.content = "Hello World";
-          this->do_write();
-          /* if (this->header_buffer) { */
-          /*   this->handle_header_buffer(bytes_transferred); */
-          /* } else { */
-          /*   this->handle_body_buffer(bytes_transferred); */
-          /* } */
-        } else if (ec != asio::error::operation_aborted) {
+          /* this->res.set_content("Hello World"); */
+          /* this->do_write(); */
+
+          if (this->header_buffer) {
+            this->handle_header_buffer(bytes_transferred);
+          } else {
+            this->handle_body_buffer(bytes_transferred);
+          }
+          return;
+        }
+
+        /* if (ec == asio::error::eof) { */
+        // Add a timer here
+        /* std::cout << "Rereading\n"; */
+        /* this->do_read(); */
+        /* return; */
+        /* } */
+
+        if (ec != asio::error::operation_aborted) {
+          std::error_code ignored_ec;
+          this->socket.shutdown(
+              asio::ip::tcp::socket::shutdown_both, ignored_ec
+          );
           this->connection_manager_.stop(shared_from_this());
         }
       }
@@ -150,21 +179,16 @@ void connection::do_read() {
 }
 
 void connection::do_write() {
-  auto self(shared_from_this());
+  /* auto self(shared_from_this()); */
+
   asio::async_write(
       this->socket, this->res.to_buffers(),
-      [this, self](std::error_code ec, std::size_t) {
-        if (!ec) {
-          // Initiate graceful connection closure.
-          asio::error_code ignored_ec;
-          this->socket.shutdown(
-              asio::ip::tcp::socket::shutdown_both, ignored_ec
-          );
+      [this](std::error_code ec, std::size_t) {
+        if (ec == asio::error::operation_aborted) {
+          return;
         }
 
-        if (ec != asio::error::operation_aborted) {
-          connection_manager_.stop(shared_from_this());
-        }
+        this->do_read();
       }
   );
 }

@@ -13,6 +13,7 @@
 #include "wrappers/http/header.hpp"
 #include <cstddef>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <sys/types.h>
 
@@ -83,18 +84,29 @@ namespace misc_strings {
 
 const char name_value_separator[] = {':', ' '};
 const char crlf[] = {'\r', '\n'};
-const char set_cookie[] = {'S', 'e', 't', '-', 'C', 'o', 'o', 'k', 'i', 'e'};
+const char content_type[] = {'C', 'o', 'n', 't', 'e', 'n', 't',
+                             '-', 'T', 'y', 'p', 'e', ':', ' '};
+const char content_length[] = {'C', 'o', 'n', 't', 'e', 'n', 't', '-',
+                               'L', 'e', 'n', 'g', 't', 'h', ':', ' '};
+const char set_cookie[] = {'S', 'e', 't', '-', 'C', 'o',
+                           'o', 'k', 'i', 'e', ':', ' '};
+const char text_html[] = {'t', 'e', 'x', 't', '/', 'h', 't', 'm', 'l'};
 
 } // namespace misc_strings
 
+void response::set_content(const std::string& content) {
+  this->content = content;
+  this->content_length = std::to_string(content.size());
+}
+
+void response::set_content(const char* content) {
+  this->content = content;
+  this->content_length = std::to_string(this->content.size());
+}
+
 std::vector<asio::const_buffer> response::to_buffers() {
   std::vector<asio::const_buffer> buffers;
-  buffers.push_back(status_strings::to_buffer(status));
-
-  for (auto& c : this->cookies) {
-    this->headers.emplace_back(header{
-        .name = "Set-Cookie", .value = c.to_string()});
-  }
+  buffers.push_back(status_strings::to_buffer(this->status));
 
   for (auto& h : this->headers) {
     buffers.emplace_back(asio::buffer(h.name));
@@ -102,6 +114,27 @@ std::vector<asio::const_buffer> response::to_buffers() {
     buffers.emplace_back(asio::buffer(h.value));
     buffers.emplace_back(asio::buffer(misc_strings::crlf));
   }
+
+  for (auto& c : this->cookies) {
+    buffers.emplace_back(asio::buffer(misc_strings::set_cookie));
+    buffers.emplace_back(asio::buffer(c.to_string()));
+    buffers.emplace_back(asio::buffer(misc_strings::crlf));
+  }
+
+  // Set the Content Type and Content Length
+  if (this->status != response::no_content) {
+    buffers.emplace_back(asio::buffer(misc_strings::content_type));
+    buffers.emplace_back(asio::buffer(misc_strings::text_html));
+    buffers.emplace_back(asio::buffer(misc_strings::crlf));
+
+    buffers.emplace_back(asio::buffer(misc_strings::content_length));
+    buffers.emplace_back(asio::buffer(this->content_length));
+    buffers.emplace_back(asio::buffer(misc_strings::crlf));
+  }
+
+  /* buffers.emplace_back(asio::buffer(std::to_string(this->content.size())));
+   */
+  /* buffers.emplace_back(asio::buffer(misc_strings::crlf)); */
 
   /* for (auto& c : this->cookies) { */
   /*   buffers.emplace_back(asio::buffer(misc_strings::set_cookie)); */

@@ -60,7 +60,7 @@ public:
 
     req.set_session_user(user.get());
 
-    res.status = adapter::response::ok;
+    res.status = adapter::response::no_content;
   }
 };
 } // namespace use_case

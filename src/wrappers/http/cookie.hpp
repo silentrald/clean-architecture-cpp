@@ -13,10 +13,16 @@ struct cookie {
   int max_age = -1;
   bool secure;
   bool http_only;
+  std::string cookie_value;
 
-  [[nodiscard]] std::string to_string() const {
+  [[nodiscard]] std::string& to_string() {
+    if (!this->cookie_value.empty()) {
+      return this->cookie_value;
+    }
+
     if (this->name.empty() || this->value.empty()) {
-      return "";
+      this->cookie_value = "";
+      return this->cookie_value;
     }
 
     std::string val = this->name + "=" + this->value;
@@ -44,7 +50,8 @@ struct cookie {
       val.append("; HttpOnly");
     }
 
-    return val;
+    this->cookie_value = val;
+    return this->cookie_value;
   }
 };
 } // namespace http::server
