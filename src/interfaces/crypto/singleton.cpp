@@ -1,4 +1,4 @@
-#include "./factory.hpp"
+#include "./singleton.hpp"
 #include "utils/env.hpp"
 
 std::unique_ptr<interface::Crypto> crypto = nullptr;

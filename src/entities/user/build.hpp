@@ -11,6 +11,9 @@
 #include <vector>
 
 namespace entity {
+
+const char* const ERROR_MSG = "User Validation Error";
+
 template <class IUserCrypto> class IUser {
 private:
   std::string id{};
@@ -51,14 +54,14 @@ IUser<IUserCrypto>::set_password(std::string& password) noexcept {
   uint len = password.size();
   if (len < this->PASSWORD_MIN) {
     return Log{
-        .msg = "Validation Error",
+        .msg = ERROR_MSG,
         .file = USER_ENTITY_FILE,
         .errors = {"password: min"}};
   }
 
   if (len > this->PASSWORD_MAX) {
     return Log{
-        .msg = "Validation Error",
+        .msg = ERROR_MSG,
         .file = USER_ENTITY_FILE,
         .errors = {"password: max"}};
   }
@@ -86,12 +89,13 @@ template <class IUserCrypto>
 
 template <class IUserCrypto>
 std::optional<Log> IUser<IUserCrypto>::hash_password() noexcept {
-  tl::expected<std::string, entity::Log> hash = IUserCrypto::hash(this->password);
+  tl::expected<std::string, entity::Log> hash =
+      IUserCrypto::hash(this->password);
   if (!hash) {
     return hash.error();
   }
 
-  this->hashed = hash;
+  this->hashed = *hash;
   return std::nullopt;
 }
 

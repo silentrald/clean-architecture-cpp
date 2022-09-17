@@ -1,10 +1,10 @@
 #ifndef LOGIN_USE_CASE_HTTP
 #define LOGIN_USE_CASE_HTTP
 
-#include "adapter/http/request.hpp"
-#include "adapter/http/response.hpp"
-#include "db/user/factory.hpp"
-#include "interfaces/logger/factory.hpp"
+#include "adapters/http/request.hpp"
+#include "adapters/http/response.hpp"
+#include "db/user/singleton.hpp"
+#include "interfaces/logger/singleton.hpp"
 #include "interfaces/store/singleton.hpp"
 #include <exception>
 #include <string>

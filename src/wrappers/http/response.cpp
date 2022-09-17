@@ -132,20 +132,6 @@ std::vector<asio::const_buffer> response::to_buffers() {
     buffers.emplace_back(asio::buffer(misc_strings::crlf));
   }
 
-  /* buffers.emplace_back(asio::buffer(std::to_string(this->content.size())));
-   */
-  /* buffers.emplace_back(asio::buffer(misc_strings::crlf)); */
-
-  /* for (auto& c : this->cookies) { */
-  /*   buffers.emplace_back(asio::buffer(misc_strings::set_cookie)); */
-  /*   buffers.emplace_back(asio::buffer(misc_strings::name_value_separator));
-   */
-
-  /*   buffers.emplace_back(asio::buffer(c.to_string())); */
-
-  /*   buffers.emplace_back(asio::buffer(misc_strings::crlf)); */
-  /* } */
-
   buffers.emplace_back(asio::buffer(misc_strings::crlf));
   buffers.emplace_back(asio::buffer(content));
 

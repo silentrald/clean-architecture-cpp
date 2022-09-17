@@ -44,6 +44,10 @@ struct response {
   std::string content{};
   std::string content_length = "0";
 
+  /* enum content_type_enum { */
+  /*   text_html = 0, */
+  /* } content_type = content_type_enum::text_html; */
+
   void set_content(const std::string& content);
   void set_content(const char* content);
   std::vector<asio::const_buffer> to_buffers();

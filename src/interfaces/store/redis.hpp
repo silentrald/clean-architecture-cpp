@@ -3,7 +3,7 @@
 
 #include "./build.hpp"
 #include "entities/log/main.hpp"
-#include "interfaces/logger/factory.hpp"
+#include "interfaces/logger/singleton.hpp"
 #include <cstdint>
 #include <deque>
 #include <hiredis.h>

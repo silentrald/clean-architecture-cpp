@@ -1,4 +1,4 @@
-#include "./factory.hpp"
+#include "./singleton.hpp"
 
 std::unique_ptr<use_case::LoginAuthUseCase> login_auth_ptr = nullptr;
 std::mutex login_auth_mutex;

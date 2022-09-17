@@ -2,7 +2,7 @@
 #define DB_CORE_PG_HPP
 
 #include "entities/log/main.hpp"
-#include "interfaces/logger/factory.hpp"
+#include "interfaces/logger/singleton.hpp"
 #include "tl/expected.hpp"
 #include <deque>
 #include <exception>

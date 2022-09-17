@@ -3,7 +3,7 @@
 
 #include "./build.hpp"
 #include "entities/log/main.hpp"
-#include "interfaces/crypto/factory.hpp"
+#include "interfaces/crypto/singleton.hpp"
 #include <memory>
 #include <tl/expected.hpp>
 

@@ -1,5 +1,5 @@
-#ifndef CRYPTO_INTERFACE_FACTORY_HPP
-#define CRYPTO_INTERFACE_FACTORY_HPP
+#ifndef CRYPTO_INTERFACE_SINGLETON_HPP
+#define CRYPTO_INTERFACE_SINGLETON_HPP
 
 #include "./main.hpp"
 #include <memory>
