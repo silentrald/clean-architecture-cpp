@@ -1,3 +1,6 @@
+#ifndef HTTP_ROUTER_HPP
+#define HTTP_ROUTER_HPP
+
 #include "request.hpp"
 #include "response.hpp"
 #include <memory>
@@ -19,3 +22,6 @@ struct router_node {
 };
 
 } // namespace http::server
+
+#endif
+

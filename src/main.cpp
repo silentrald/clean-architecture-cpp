@@ -1,20 +1,9 @@
-#include "adapters/http/request.hpp"
-#include "db/core/singleton.hpp"
-#include "entities/user/factory.hpp"
+#include "api/auth.hpp"
 #include "interfaces/logger/singleton.hpp"
 #include "interfaces/store/singleton.hpp"
 #include "use-cases/auth/singleton.hpp"
 #include "utils/env.hpp"
-#include "wrappers/http/cookie.hpp"
-#include "wrappers/http/header.hpp"
-#include "wrappers/http/request.hpp"
-#include "wrappers/http/response.hpp"
 #include "wrappers/http/server.hpp"
-#include <chrono>
-#include <cstdlib>
-#include <iostream>
-#include <memory>
-#include <optional>
 #include <string>
 
 int main() {
@@ -50,30 +39,17 @@ int main() {
     return -1;
   }
 
-  const char* const HOST = "127.0.0.1";
-  const char* const PORT = "5000";
+  std::string HOST = utils::env::get_env("HOST", "127.0.0.1");
+  std::string PORT = utils::env::get_env("PORT", "5000");
+  std::string POOL_STRING = utils::env::get_env("POOL", "1");
+  uint POOL = std::strtoul(POOL_STRING.c_str(), nullptr, 10);
 
-  // TODO: Separate this to the api folder
-  http::server::router login_auth_rtr{
-      .method = "POST",
-      .path = "/auth/login",
-      .cb = [](http::server::request* req, http::server::response* res) {
-        adapter::request areq{req, res};
-        use_case::login_auth()->execute(areq, *res);
-      }};
-
-  // TODO: Separate this to the api folder
-  http::server::router logout_auth_rtr{
-      .method = "POST",
-      .path = "/auth/logout",
-      .cb = [](http::server::request* req, http::server::response* res) {
-        adapter::request areq{req, res};
-        use_case::logout_auth()->execute(areq, *res);
-      }}; 
+  // Initialize the apis here
+  api::Auth auth_api;
 
   try {
     http::server::server s(
-        HOST, PORT, {login_auth_rtr, logout_auth_rtr}, "/api", 2
+        HOST, PORT, auth_api.get_routers(), "/api", POOL
     );
     interface::get_logger()->info(
         std::string{"Running server http://"} + HOST + ":" + PORT
