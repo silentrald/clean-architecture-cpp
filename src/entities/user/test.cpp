@@ -1,5 +1,4 @@
 #include "./factory.hpp"
-#include "catch2/catch_test_macros.hpp"
 #include <catch2/catch_all.hpp>
 #include <optional>
 
@@ -9,7 +8,7 @@ const int PASSWORD_OVER_MAX = 61;
 using Crypto = entity::UserCrypto;
 
 // NOLINTNEXTLINE (cert-err58-cpp)
-TEST_CASE("Testing User Entity") {
+TEST_CASE("User Entity", "Entity") {
   SECTION("All fields with hashing the password") {
     std::string id = "id";
     std::string username = "username";

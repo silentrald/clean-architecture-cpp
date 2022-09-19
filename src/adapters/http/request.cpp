@@ -56,11 +56,12 @@ void request::set_session_user(entity::User* user) {
 
 std::unique_ptr<entity::User> request::get_session_user() {
   auto user_json = interface::get_store()->get_string(this->get_session_key());
-  if (!user_json) {
+  if (!user_json || !*user_json) {
     return nullptr;
   }
 
-  json user = json::parse(user_json.value());
+  json user = json::parse(**user_json);
+  /* json user = json::parse({}); */
   try {
     std::string id = user.at("id");
     std::string username = user.at("username");

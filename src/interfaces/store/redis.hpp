@@ -4,12 +4,14 @@
 #include "./build.hpp"
 #include "entities/log/main.hpp"
 #include "interfaces/logger/singleton.hpp"
+#include "tl/expected.hpp"
 #include <cstdint>
 #include <deque>
 #include <hiredis.h>
 #include <memory>
 #include <optional>
 #include <semaphore>
+#include <string>
 
 namespace interface {
 class RedisStore : public IStore<RedisStore> {
@@ -35,22 +37,23 @@ public:
   );
   ~RedisStore();
 
-  std::optional<int> get_int_impl(const char* key);
-  std::optional<int64_t> get_int64_impl(const char* key);
-  std::optional<float> get_float_impl(const char* key);
-  std::optional<double> get_double_impl(const char* key);
-  std::optional<bool> get_bool_impl(const char* key);
-  std::optional<const char*> get_string_impl(const char* key);
+  tl::expected<std::optional<int>, entity::Log> get_int32_impl(const char* key) noexcept;
+  tl::expected<std::optional<int64_t>, entity::Log> get_int64_impl(const char* key) noexcept;
+  tl::expected<std::optional<float>, entity::Log> get_float_impl(const char* key) noexcept;
+  tl::expected<std::optional<double>, entity::Log> get_double_impl(const char* key) noexcept;
+  tl::expected<std::optional<bool>, entity::Log> get_bool_impl(const char* key) noexcept;
+  tl::expected<std::optional<std::string>, entity::Log> get_string_impl(const char* key) noexcept;
 
-  bool set_int_impl(const char* key, int val);
-  bool set_int64_impl(const char* key, int64_t val);
-  bool set_float_impl(const char* key, float val);
-  bool set_double_impl(const char* key, double val);
-  bool set_bool_impl(const char* key, bool val);
-  bool set_string_impl(const char* key, const char* val);
+  bool set_int_impl(const char* key, int val) noexcept;
+  bool set_int64_impl(const char* key, int64_t val) noexcept;
+  bool set_float_impl(const char* key, float val) noexcept;
+  bool set_double_impl(const char* key, double val) noexcept;
+  bool set_bool_impl(const char* key, bool val) noexcept;
+  /* bool set_string_impl(const char* key, const std::string& val) noexcept; */
+  bool set_string_impl(const char* key, const char* val) noexcept;
 
-  bool exists_impl(const char* key);
-  bool del_impl(const char* key);
+  bool exists_impl(const char* key) noexcept;
+  bool del_impl(const char* key) noexcept;
 
   // Error handling
   [[nodiscard]] std::optional<entity::Log> get_error_impl() const noexcept;

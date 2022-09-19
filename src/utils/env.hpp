@@ -16,7 +16,7 @@ namespace utils::env {
  *          If called in ./src/main.cpp, the relative path is ./src.
  *          Default "../.env".
  */
-void init_env(const std::string& path = "../.env");
+void init_env(const std::string& path = "../.env") noexcept;
 
 /**
  * Gets the environment value with a key.
@@ -26,8 +26,8 @@ void init_env(const std::string& path = "../.env");
  * @param def - If key does not exists, return this
  * @returns std::string - returns value if key exists else def
  */
-std::string get_env(const std::string& key, const std::string& def);
-std::string get_env(const char* key, const char* def);
+std::string get_env(const std::string& key, const std::string& def) noexcept;
+std::string get_env(const char* key, const char* def) noexcept;
 } // namespace utils::env
 
 #endif

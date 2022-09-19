@@ -5,7 +5,7 @@ namespace env = utils::env;
 // NOTE: Concurrency will not matter since init is ran
 // before the threads are executed and after that, env will only be read
 
-void env::init_env(const std::string& path) {
+void env::init_env(const std::string& path) noexcept {
   std::ifstream file(path);
   if (!file.is_open()) {
     // BUG: SILENT ERROR
@@ -26,7 +26,7 @@ void env::init_env(const std::string& path) {
   file.close();
 }
 
-std::string env::get_env(const std::string& key, const std::string& def) {
+std::string env::get_env(const std::string& key, const std::string& def) noexcept {
   // NOLINTNEXTLINE(concurrency-mt-unsafe)
   const char* env = getenv(key.c_str());
   if (env == nullptr || strcmp(env, "") == 0) {
@@ -37,7 +37,7 @@ std::string env::get_env(const std::string& key, const std::string& def) {
   return std::string{env};
 }
 
-std::string env::get_env(const char* key, const char* def) {
+std::string env::get_env(const char* key, const char* def) noexcept {
   // NOLINTNEXTLINE(concurrency-mt-unsafe)
   const char* env = getenv(key);
   if (env == nullptr || strcmp(env, "") == 0) {

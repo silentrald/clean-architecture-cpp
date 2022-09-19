@@ -1,4 +1,8 @@
 #include "./redis.hpp"
+#include "read.h"
+#include "utils/string.hpp"
+#include <cstdlib>
+#include <string>
 
 using namespace interface;
 
@@ -68,128 +72,8 @@ void RedisStore::release_context(redisContext* ctx) {
 }
 
 /*** GET ***/
-std::optional<int> RedisStore::get_int_impl(const char* key) {
-  redisContext* ctx = this->get_context();
-  // clang-format off
-  auto* reply = static_cast<redisReply*>(
-    redisCommand(ctx, "GET %s", key)
-  );
-  // clang-format on
-  this->release_context(ctx);
-
-  if (reply->type == REDIS_REPLY_INTEGER) {
-    int val = static_cast<int>(reply->integer);
-    freeReplyObject(reply);
-    return reply->integer;
-  }
-
-  if (reply->type == REDIS_REPLY_NIL) {
-    freeReplyObject(reply);
-    return std::nullopt;
-  }
-
-  freeReplyObject(reply);
-  return std::nullopt;
-}
-
-std::optional<int64_t> RedisStore::get_int64_impl(const char* key) {
-  redisContext* ctx = this->get_context();
-  // clang-format off
-  auto* reply = static_cast<redisReply*>(
-    redisCommand(ctx, "GET %s", key)
-  );
-  // clang-format on
-  this->release_context(ctx);
-
-  if (reply->type == REDIS_REPLY_INTEGER) {
-    long long val = reply->integer;
-    freeReplyObject(reply);
-    return val;
-  }
-
-  if (reply->type == REDIS_REPLY_NIL) {
-    freeReplyObject(reply);
-    return std::nullopt;
-  }
-
-  freeReplyObject(reply);
-  return std::nullopt;
-}
-
-std::optional<float> RedisStore::get_float_impl(const char* key) {
-  return std::nullopt;
-  redisContext* ctx = this->get_context();
-  // clang-format off
-  auto* reply = static_cast<redisReply*>(
-    redisCommand(ctx, "GET %s", key)
-  );
-  // clang-format on
-  this->release_context(ctx);
-
-  if (reply->type == REDIS_REPLY_DOUBLE) {
-    double val = std::stod(reply->str);
-    freeReplyObject(reply);
-    return val;
-  }
-
-  if (reply->type == REDIS_REPLY_NIL) {
-    freeReplyObject(reply);
-    return std::nullopt;
-  }
-
-  freeReplyObject(reply);
-  return std::nullopt;
-}
-
-std::optional<double> RedisStore::get_double_impl(const char* key) {
-  redisContext* ctx = this->get_context();
-  // clang-format off
-  auto* reply = static_cast<redisReply*>(
-    redisCommand(ctx, "GET %s", key)
-  );
-  // clang-format on
-  this->release_context(ctx);
-
-  if (reply->type == REDIS_REPLY_DOUBLE) {
-    float val = std::stof(reply->str);
-    freeReplyObject(reply);
-    return val;
-  }
-
-  if (reply->type == REDIS_REPLY_NIL) {
-    freeReplyObject(reply);
-    return std::nullopt;
-  }
-
-  freeReplyObject(reply);
-  return std::nullopt;
-}
-
-std::optional<bool> RedisStore::get_bool_impl(const char* key) {
-  redisContext* ctx = this->get_context();
-  // clang-format off
-  auto* reply = static_cast<redisReply*>(
-    redisCommand(ctx, "GET %s", key)
-  );
-  // clang-format on
-  this->release_context(ctx);
-
-  if (reply->type == REDIS_REPLY_BOOL) {
-    bool val = reply->integer > 0;
-    freeReplyObject(reply);
-    return val;
-  }
-
-  if (reply->type == REDIS_REPLY_NIL) {
-    freeReplyObject(reply);
-    return std::nullopt;
-  }
-
-  freeReplyObject(reply);
-  return std::nullopt;
-}
-
-std::optional<const char*> RedisStore::get_string_impl(const char* key) {
+tl::expected<std::optional<int>, entity::Log>
+RedisStore::get_int32_impl(const char* key) noexcept {
   redisContext* ctx = this->get_context();
   // clang-format off
   auto* reply = static_cast<redisReply*>(
@@ -199,7 +83,167 @@ std::optional<const char*> RedisStore::get_string_impl(const char* key) {
   this->release_context(ctx);
 
   if (reply->type == REDIS_REPLY_STRING) {
-    const char* val = reply->str;
+    auto val = utils::string::to_int32(reply->str);
+    freeReplyObject(reply);
+    if (val) {
+      return val;
+    }
+
+    val.error().file = "interfaces/store/redis.cpp";
+    val.error().function = "RedisStore::get_int32_impl(const char*)";
+    return val;
+  }
+
+  if (reply->type == REDIS_REPLY_NIL) {
+    freeReplyObject(reply);
+    return std::nullopt;
+  }
+
+  entity::Log log{
+      .msg = "Unknown error",
+      .file = "interfaces/store/redis.cpp",
+      .function = "RedisStore::get_int32_impl(const char*)"};
+
+  if (reply->type == REDIS_REPLY_ERROR) {
+    log.msg = reply->str;
+  }
+
+  freeReplyObject(reply);
+  return tl::unexpected<entity::Log>(log);
+}
+
+tl::expected<std::optional<int64_t>, entity::Log>
+RedisStore::get_int64_impl(const char* key) noexcept {
+  redisContext* ctx = this->get_context();
+  // clang-format off
+  auto* reply = static_cast<redisReply*>(
+    redisCommand(ctx, "GET %s", key)
+  );
+  // clang-format on
+  this->release_context(ctx);
+
+  if (reply->type == REDIS_REPLY_STRING) {
+    auto val = utils::string::to_int64(reply->str);
+    freeReplyObject(reply);
+    if (val) {
+      return val;
+    }
+
+    val.error().file = "interfaces/store/redis.cpp";
+    val.error().function = "RedisStore::get_int64_impl(const char*)";
+    return val;
+  }
+
+  if (reply->type == REDIS_REPLY_NIL) {
+    freeReplyObject(reply);
+    return std::nullopt;
+  }
+
+  entity::Log log{
+      .msg = "Unknown error",
+      .file = "interfaces/store/redis.cpp",
+      .function = "RedisStore::get_int64_impl(const char*)"};
+
+  if (reply->type == REDIS_REPLY_ERROR) {
+    log.msg = reply->str;
+  }
+
+  freeReplyObject(reply);
+  return tl::unexpected<entity::Log>(log);
+}
+
+tl::expected<std::optional<float>, entity::Log>
+RedisStore::get_float_impl(const char* key) noexcept {
+  redisContext* ctx = this->get_context();
+  // clang-format off
+  auto* reply = static_cast<redisReply*>(
+    redisCommand(ctx, "GET %s", key)
+  );
+  // clang-format on
+  this->release_context(ctx);
+
+  if (reply->type == REDIS_REPLY_STRING) {
+    auto val = utils::string::to_float(reply->str);
+    freeReplyObject(reply);
+    if (val) {
+      return val;
+    }
+
+    val.error().file = "interfaces/store/redis.cpp";
+    val.error().function = "RedisStore::get_float_impl(const char*)";
+    return val;
+  }
+
+  if (reply->type == REDIS_REPLY_NIL) {
+    freeReplyObject(reply);
+    return std::nullopt;
+  }
+
+  entity::Log log{
+      .msg = "Unknown error",
+      .file = "interfaces/store/redis.cpp",
+      .function = "RedisStore::get_float_impl(const char*)"};
+
+  if (reply->type == REDIS_REPLY_ERROR) {
+    log.msg = reply->str;
+  }
+
+  freeReplyObject(reply);
+  return tl::unexpected<entity::Log>(log);
+}
+
+tl::expected<std::optional<double>, entity::Log>
+RedisStore::get_double_impl(const char* key) noexcept {
+  redisContext* ctx = this->get_context();
+  // clang-format off
+  auto* reply = static_cast<redisReply*>(
+    redisCommand(ctx, "GET %s", key)
+  );
+  // clang-format on
+  this->release_context(ctx);
+
+  if (reply->type == REDIS_REPLY_STRING) {
+    auto val = utils::string::to_double(reply->str);
+    freeReplyObject(reply);
+    if (val) {
+      return val;
+    }
+
+    val.error().file = "interfaces/store/redis.cpp";
+    val.error().function = "RedisStore::get_double_impl(const char*)";
+    return val;
+  }
+
+  if (reply->type == REDIS_REPLY_NIL) {
+    freeReplyObject(reply);
+    return std::nullopt;
+  }
+
+  entity::Log log{
+      .msg = "Unknown error",
+      .file = "interfaces/store/redis.cpp",
+      .function = "RedisStore::get_double_impl(const char*)"};
+
+  if (reply->type == REDIS_REPLY_ERROR) {
+    log.msg = reply->str;
+  }
+
+  freeReplyObject(reply);
+  return tl::unexpected<entity::Log>(log);
+}
+
+tl::expected<std::optional<bool>, entity::Log>
+RedisStore::get_bool_impl(const char* key) noexcept {
+  redisContext* ctx = this->get_context();
+  // clang-format off
+  auto* reply = static_cast<redisReply*>(
+    redisCommand(ctx, "GET %s", key)
+  );
+  // clang-format on
+  this->release_context(ctx);
+
+  if (reply->type == REDIS_REPLY_STRING) {
+    bool val = reply->str[0] != '0';
     freeReplyObject(reply);
     return val;
   }
@@ -209,14 +253,57 @@ std::optional<const char*> RedisStore::get_string_impl(const char* key) {
     return std::nullopt;
   }
 
+  entity::Log log{
+      .msg = "Unknown error",
+      .file = "interfaces/store/redis.cpp",
+      .function = "RedisStore::get_double_impl(const char*)"};
+
+  if (reply->type == REDIS_REPLY_ERROR) {
+    log.msg = reply->str;
+  }
+
   freeReplyObject(reply);
-  return std::nullopt;
+  return tl::unexpected<entity::Log>(log);
+}
+
+tl::expected<std::optional<std::string>, entity::Log>
+RedisStore::get_string_impl(const char* key) noexcept {
+  redisContext* ctx = this->get_context();
+  // clang-format off
+  auto* reply = static_cast<redisReply*>(
+    redisCommand(ctx, "GET %s", key)
+  );
+  // clang-format on
+  this->release_context(ctx);
+
+  if (reply->type == REDIS_REPLY_STRING) {
+    std::string val = reply->str;
+    freeReplyObject(reply);
+    return val;
+  }
+
+  if (reply->type == REDIS_REPLY_NIL) {
+    freeReplyObject(reply);
+    return std::nullopt;
+  }
+
+  entity::Log log{
+      .msg = "Unknown error",
+      .file = "interfaces/store/redis.cpp",
+      .function = "RedisStore::get_double_impl(const char*)"};
+
+  if (reply->type == REDIS_REPLY_ERROR) {
+    log.msg = reply->str;
+  }
+
+  freeReplyObject(reply);
+  return tl::unexpected<entity::Log>(log);
 }
 
 // GET
 
 /*** SET ***/
-bool RedisStore::set_int_impl(const char* key, int val) {
+bool RedisStore::set_int_impl(const char* key, int val) noexcept {
   redisContext* ctx = this->get_context();
   // clang-format off
   auto* reply = static_cast<redisReply*>(
@@ -231,7 +318,7 @@ bool RedisStore::set_int_impl(const char* key, int val) {
   return set;
 }
 
-bool RedisStore::set_int64_impl(const char* key, int64_t val) {
+bool RedisStore::set_int64_impl(const char* key, int64_t val) noexcept {
   redisContext* ctx = this->get_context();
   auto* reply =
       static_cast<redisReply*>(redisCommand(ctx, "SET %s %lld", key, val));
@@ -243,11 +330,11 @@ bool RedisStore::set_int64_impl(const char* key, int64_t val) {
   return set;
 }
 
-bool RedisStore::set_float_impl(const char* key, float val) {
+bool RedisStore::set_float_impl(const char* key, float val) noexcept {
   redisContext* ctx = this->get_context();
   // clang-format off
   auto* reply = static_cast<redisReply*>(
-    redisCommand(ctx, "SET %s %f", key, val)
+    redisCommand(ctx, "SET %s %.7f", key, val)
   );
   // clang-format on
   this->release_context(ctx);
@@ -258,14 +345,16 @@ bool RedisStore::set_float_impl(const char* key, float val) {
   return set;
 }
 
-bool RedisStore::set_double_impl(const char* key, double val) {
+bool RedisStore::set_double_impl(const char* key, double val) noexcept {
   redisContext* ctx = this->get_context();
   // clang-format off
   auto* reply = static_cast<redisReply*>(
-    redisCommand(ctx, "SET %s %lf", key, val)
+    redisCommand(ctx, "SET %s %.15f", key, val)
   );
   // clang-format on
   this->release_context(ctx);
+
+  /* this->logger->debug(std::to_string(reply->type)); */
 
   bool set = reply->type != REDIS_REPLY_ERROR;
   freeReplyObject(reply);
@@ -273,7 +362,7 @@ bool RedisStore::set_double_impl(const char* key, double val) {
   return set;
 }
 
-bool RedisStore::set_bool_impl(const char* key, bool val) {
+bool RedisStore::set_bool_impl(const char* key, bool val) noexcept {
   redisContext* ctx = this->get_context();
   // clang-format off
   auto* reply = static_cast<redisReply*>(
@@ -288,7 +377,7 @@ bool RedisStore::set_bool_impl(const char* key, bool val) {
   return set;
 }
 
-bool RedisStore::set_string_impl(const char* key, const char* val) {
+bool RedisStore::set_string_impl(const char* key, const char* val) noexcept {
   redisContext* ctx = this->get_context();
   // clang-format off
   auto* reply = static_cast<redisReply*>(
@@ -322,7 +411,7 @@ bool RedisStore::set_string_impl(const char* key, const char* val) {
 // SET
 
 // TODO: Expected
-bool RedisStore::exists_impl(const char* key) {
+bool RedisStore::exists_impl(const char* key) noexcept {
   redisContext* ctx = this->get_context();
   auto* reply = static_cast<redisReply*>(redisCommand(ctx, "EXISTS %s", key));
   this->release_context(ctx);
@@ -336,7 +425,7 @@ bool RedisStore::exists_impl(const char* key) {
   return false;
 }
 
-bool RedisStore::del_impl(const char* key) {
+bool RedisStore::del_impl(const char* key) noexcept {
   redisContext* ctx = this->get_context();
   // clang-format off
   auto* reply = static_cast<redisReply*>(

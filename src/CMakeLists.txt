@@ -13,24 +13,6 @@ add_subdirectory(use-cases)
 
 # === LINKERS ===
 
-### *== ENTITIES ==*
-target_link_libraries(user_entity
-  PRIVATE crypto_interface
-)
-target_link_libraries(user_entity_test
-  PRIVATE crypto_interface
-)
-
-### *== INTERFACES == *
-target_link_libraries(crypto_interface
-  PRIVATE utils
-  PRIVATE argon2
-)
-
-target_link_libraries(store_interface
-  PRIVATE hiredis
-)
-
 ### *== DB ==*
 target_link_libraries(db_core
   PRIVATE pq
