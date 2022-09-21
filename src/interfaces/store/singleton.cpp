@@ -1,10 +1,9 @@
 #include "./singleton.hpp"
 
-// NOLINTNEXTLINE
-std::unique_ptr<interface::Store> store = nullptr;
+std::unique_ptr<interface::RedisStore> interface::store = nullptr;
 
 [[nodiscard]] std::optional<entity::Log>
-interface::init_store(const StoreConfig& config) {
+interface::init_store(const StoreConfig& config) noexcept {
   store = std::make_unique<interface::RedisStore>(
       config.host, config.port, config.pool
   );
@@ -17,19 +16,12 @@ interface::init_store(const StoreConfig& config) {
   return std::nullopt;
 }
 
-[[nodiscard]] interface::Store* interface::get_store() {
-  if (store == nullptr) {
-    return nullptr;
-  }
-
-  return store.get();
-}
-
-void interface::clear_store() {
+void interface::clear_store() noexcept {
   if (store == nullptr) {
     return;
   }
 
   store.reset();
 }
+
 

@@ -3,6 +3,7 @@
 
 // TODO: Add mock implementation if needed, configure the structure passed
 
+// NOLINTBEGIN(*-unused-parameters)
 namespace interface {
 
 std::optional<int> get_int_impl(const char* key) {
@@ -62,4 +63,6 @@ bool del_impl(const char* key) {
 }
 
 } // namespace interface
+
+// NOLINTEND(*-unused-parameters)
 

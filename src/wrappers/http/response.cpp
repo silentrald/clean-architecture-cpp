@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include <sys/types.h>
+#include <vector>
 
 namespace http::server {
 
@@ -39,39 +40,39 @@ const std::string not_implemented = "HTTP/1.1 501 Not Implemented\r\n";
 const std::string bad_gateway = "HTTP/1.1 502 Bad Gateway\r\n";
 const std::string service_unavailable = "HTTP/1.1 503 Service Unavailable\r\n";
 
-asio::const_buffer to_buffer(response::status_type status) {
+asio::const_buffer to_buffer(int status) {
   switch (status) {
-  case response::ok:
+  case STATUS_OK:
     return asio::buffer(ok);
-  case response::created:
+  case STATUS_CREATED:
     return asio::buffer(created);
-  case response::accepted:
+  case STATUS_ACCEPTED:
     return asio::buffer(accepted);
-  case response::no_content:
+  case STATUS_NO_CONTENT:
     return asio::buffer(no_content);
-  case response::multiple_choices:
+  case STATUS_MULTIPLE_CHOICES:
     return asio::buffer(multiple_choices);
-  case response::moved_permanently:
+  case STATUS_MOVED_PERMANENTLY:
     return asio::buffer(moved_permanently);
-  case response::moved_temporarily:
+  case STATUS_MOVED_TEMPORARILY:
     return asio::buffer(moved_temporarily);
-  case response::not_modified:
+  case STATUS_NOT_MODIFIED:
     return asio::buffer(not_modified);
-  case response::bad_request:
+  case STATUS_BAD_REQUEST:
     return asio::buffer(bad_request);
-  case response::unauthorized:
+  case STATUS_UNAUTHORIZED:
     return asio::buffer(unauthorized);
-  case response::forbidden:
+  case STATUS_FORBIDDEN:
     return asio::buffer(forbidden);
-  case response::not_found:
+  case STATUS_NOT_FOUND:
     return asio::buffer(not_found);
-  case response::internal_server_error:
+  case STATUS_INTERNAL_SERVER_ERROR:
     return asio::buffer(internal_server_error);
-  case response::not_implemented:
+  case STATUS_NOT_IMPLEMENTED:
     return asio::buffer(not_implemented);
-  case response::bad_gateway:
+  case STATUS_BAD_GATEWAY:
     return asio::buffer(bad_gateway);
-  case response::service_unavailable:
+  case STATUS_SERVICE_UNAVAILABLE:
     return asio::buffer(service_unavailable);
   default:
     return asio::buffer(internal_server_error);
@@ -90,19 +91,11 @@ const char content_length[] = {'C', 'o', 'n', 't', 'e', 'n', 't', '-',
                                'L', 'e', 'n', 'g', 't', 'h', ':', ' '};
 const char set_cookie[] = {'S', 'e', 't', '-', 'C', 'o',
                            'o', 'k', 'i', 'e', ':', ' '};
-const char text_html[] = {'t', 'e', 'x', 't', '/', 'h', 't', 'm', 'l'};
+
+const std::vector<std::string> content_type_strings = {
+    "application/json", "text/html"};
 
 } // namespace misc_strings
-
-void response::set_content(const std::string& content) {
-  this->content = content;
-  this->content_length = std::to_string(content.size());
-}
-
-void response::set_content(const char* content) {
-  this->content = content;
-  this->content_length = std::to_string(this->content.size());
-}
 
 std::vector<asio::const_buffer> response::to_buffers() {
   std::vector<asio::const_buffer> buffers;
@@ -121,10 +114,12 @@ std::vector<asio::const_buffer> response::to_buffers() {
     buffers.emplace_back(asio::buffer(misc_strings::crlf));
   }
 
-  // Set the Content Type and Content Length
-  if (this->status != response::no_content) {
+  // Set the Content Type and Content Lengtif (this->status != 204) {
+  if (this->status != STATUS_NO_CONTENT) {
     buffers.emplace_back(asio::buffer(misc_strings::content_type));
-    buffers.emplace_back(asio::buffer(misc_strings::text_html));
+    buffers.emplace_back(
+        asio::buffer(misc_strings::content_type_strings[this->content_type])
+    );
     buffers.emplace_back(asio::buffer(misc_strings::crlf));
 
     buffers.emplace_back(asio::buffer(misc_strings::content_length));
@@ -208,39 +203,39 @@ const char* const service_unavailable =
     "<body><h1>503 Service Unavailable</h1></body>"
     "</html>";
 
-std::string to_string(response::status_type status) {
+std::string to_string(int status) {
   switch (status) {
-  case response::ok:
+  case STATUS_OK:
     return ok;
-  case response::created:
+  case STATUS_CREATED:
     return created;
-  case response::accepted:
+  case STATUS_ACCEPTED:
     return accepted;
-  case response::no_content:
+  case STATUS_NO_CONTENT:
     return no_content;
-  case response::multiple_choices:
+  case STATUS_MULTIPLE_CHOICES:
     return multiple_choices;
-  case response::moved_permanently:
+  case STATUS_MOVED_PERMANENTLY:
     return moved_permanently;
-  case response::moved_temporarily:
+  case STATUS_MOVED_TEMPORARILY:
     return moved_temporarily;
-  case response::not_modified:
+  case STATUS_NOT_MODIFIED:
     return not_modified;
-  case response::bad_request:
+  case STATUS_BAD_REQUEST:
     return bad_request;
-  case response::unauthorized:
+  case STATUS_UNAUTHORIZED:
     return unauthorized;
-  case response::forbidden:
+  case STATUS_FORBIDDEN:
     return forbidden;
-  case response::not_found:
+  case STATUS_NOT_FOUND:
     return not_found;
-  case response::internal_server_error:
+  case STATUS_INTERNAL_SERVER_ERROR:
     return internal_server_error;
-  case response::not_implemented:
+  case STATUS_NOT_IMPLEMENTED:
     return not_implemented;
-  case response::bad_gateway:
+  case STATUS_BAD_GATEWAY:
     return bad_gateway;
-  case response::service_unavailable:
+  case STATUS_SERVICE_UNAVAILABLE:
     return service_unavailable;
   default:
     return internal_server_error;
@@ -249,7 +244,7 @@ std::string to_string(response::status_type status) {
 
 } // namespace stock_responses
 
-response response::stock_response(response::status_type status) {
+response response::stock_response(int status) {
   response res;
   res.status = status;
   res.content = stock_responses::to_string(status);

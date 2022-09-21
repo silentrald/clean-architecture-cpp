@@ -1,9 +1,9 @@
 // NOTE: REDIS SERVER MUST BE ACTIVE
 
 #include "./singleton.hpp"
-#include "catch2/catch_message.hpp"
-#include "catch2/catch_test_macros.hpp"
 #include "utils/number.hpp"
+#include <catch2/catch_message.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <optional>
 
 // NOLINTNEXTLINE

@@ -1,5 +1,5 @@
-#ifndef ORE_INTERFACE_REDIS_HPP
-#define ORE_INTERFACE_REDIS_HPP
+#ifndef STORE_INTERFACE_REDIS_HPP
+#define STORE_INTERFACE_REDIS_HPP
 
 #include "./build.hpp"
 #include "entities/log/main.hpp"
@@ -18,7 +18,7 @@ class RedisStore : public IStore<RedisStore> {
 private:
   std::deque<redisContext*> pool;
   std::counting_semaphore<> semaphore;
-  Logger* logger = nullptr;
+  /* Logger* logger = nullptr; */
   std::optional<entity::Log> error = std::nullopt;
 
   redisContext* get_context();
@@ -32,17 +32,23 @@ public:
   RedisStore& operator=(RedisStore&&) = delete;
 
   RedisStore(
-      const std::string& host, int port, uint num_pool = 1U,
-      Logger* logger = get_logger()
+      const std::string& host, int port, uint num_pool = 1U
+      /* Logger* logger = get_logger() */
   );
   ~RedisStore();
 
-  tl::expected<std::optional<int>, entity::Log> get_int32_impl(const char* key) noexcept;
-  tl::expected<std::optional<int64_t>, entity::Log> get_int64_impl(const char* key) noexcept;
-  tl::expected<std::optional<float>, entity::Log> get_float_impl(const char* key) noexcept;
-  tl::expected<std::optional<double>, entity::Log> get_double_impl(const char* key) noexcept;
-  tl::expected<std::optional<bool>, entity::Log> get_bool_impl(const char* key) noexcept;
-  tl::expected<std::optional<std::string>, entity::Log> get_string_impl(const char* key) noexcept;
+  tl::expected<std::optional<int>, entity::Log> get_int32_impl(const char* key
+  ) noexcept;
+  tl::expected<std::optional<int64_t>, entity::Log>
+  get_int64_impl(const char* key) noexcept;
+  tl::expected<std::optional<float>, entity::Log> get_float_impl(const char* key
+  ) noexcept;
+  tl::expected<std::optional<double>, entity::Log>
+  get_double_impl(const char* key) noexcept;
+  tl::expected<std::optional<bool>, entity::Log> get_bool_impl(const char* key
+  ) noexcept;
+  tl::expected<std::optional<std::string>, entity::Log>
+  get_string_impl(const char* key) noexcept;
 
   bool set_int_impl(const char* key, int val) noexcept;
   bool set_int64_impl(const char* key, int64_t val) noexcept;

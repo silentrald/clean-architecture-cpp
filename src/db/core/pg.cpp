@@ -66,18 +66,18 @@ PostgresClient::query(
 // Core
 Postgres::Postgres(
     const std::string& host, const std::string& port, const std::string& user,
-    const std::string& password, const std::string& db, uint num_pool,
-    interface::Logger* logger
+    const std::string& password, const std::string& db, uint num_pool
+    /* interface::Logger* logger */
 )
-    : logger(logger), semaphore(num_pool) {
+    : semaphore(num_pool) {
 
-  if (logger == nullptr) {
-    this->error = entity::Log{
-        .msg = "Logger is not initialized",
-        .file = "db/core/pg.cpp",
-        .function = "Postgres::Postgres"};
-    return;
-  }
+  /* if (logger == nullptr) { */
+  /*   this->error = entity::Log{ */
+  /*       .msg = "Logger is not initialized", */
+  /*       .file = "db/core/pg.cpp", */
+  /*       .function = "Postgres::Postgres"}; */
+  /*   return; */
+  /* } */
 
   std::string connection = "host=" + host + " port=" + port + " dbname=" + db +
                            " user=" + user + " password=" + password;
@@ -107,9 +107,9 @@ Postgres::~Postgres() {
     return;
   }
 
-  this->logger->debug(
-      "Freeing " + std::to_string(this->pool.size()) + " pg thread pools"
-  );
+  /* this->logger->debug( */
+  /*     "Freeing " + std::to_string(this->pool.size()) + " pg thread pools" */
+  /* ); */
   for (auto& client : this->pool) {
     PQfinish(client);
   }

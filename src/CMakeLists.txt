@@ -33,13 +33,3 @@ target_link_libraries(http_adapter
   PRIVATE http_wrapper
 )
 
-### *== USE_CASES ==*
-target_link_libraries(auth_use_case
-  PRIVATE http_adapter
-  PRIVATE hiredis
-  PRIVATE store_interface
-  PRIVATE db_core
-  PRIVATE user_db
-  PRIVATE logger_interface
-)
-

@@ -1,5 +1,5 @@
-#ifndef ER_DB_POSTGRES_HPP
-#define ER_DB_POSTGRES_HPP
+#ifndef USER_DB_POSTGRES_HPP
+#define USER_DB_POSTGRES_HPP
 
 #include "../core/pg.hpp"
 #include "./build.hpp"
@@ -19,7 +19,7 @@ public:
   explicit UserPostgres(Postgres* pg);
 
   tl::expected<std::shared_ptr<entity::User>, entity::Log>
-  get_user_by_username_impl(std::string& username);
+  get_user_by_username_impl(std::string& username) noexcept;
 };
 } // namespace db
 

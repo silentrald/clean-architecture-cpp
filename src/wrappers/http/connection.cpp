@@ -21,6 +21,7 @@
 #include "request_handler.hpp"
 #include "wrappers/http/cookie.hpp"
 #include "wrappers/http/request.hpp"
+#include "wrappers/http/response.hpp"
 #include <cstddef>
 #include <iostream>
 #include <system_error>
@@ -104,7 +105,7 @@ void connection::handle_header_buffer(std::size_t bytes_transferred) {
     uint body_size = bytes_transferred + (this->buffer.data() - it);
     if (this->socket.available() == 0) {
       if (body_size > this->req.content_len) {
-        this->res = response::stock_response(response::bad_request);
+        this->res = response::stock_response(STATUS_BAD_REQUEST);
         this->do_write();
       } else {
         this->req.body = std::string{it, body_size};
@@ -116,7 +117,7 @@ void connection::handle_header_buffer(std::size_t bytes_transferred) {
       this->header_buffer = false;
     }
   } else if (result == request_parser::bad) {
-    this->res = response::stock_response(response::bad_request);
+    this->res = response::stock_response(STATUS_BAD_REQUEST);
     this->do_write();
   } else { // Indeterminate
     // Still read the header value
@@ -129,7 +130,7 @@ void connection::handle_body_buffer(std::size_t bytes_transferred) {
 
   if (this->req.body.size() > this->req.content_len) {
     this->header_buffer = true;
-    this->res = response::stock_response(response::bad_request);
+    this->res = response::stock_response(STATUS_BAD_REQUEST);
     this->do_write();
   } else if (this->socket.available() == 0) {
     this->header_buffer = true;

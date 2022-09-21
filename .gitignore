@@ -15,7 +15,7 @@ debug
 release
 
 # Local Kanban System
-board.md
+taskell.md
 
 # Environment Variables
 .env

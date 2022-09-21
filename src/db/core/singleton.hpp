@@ -1,5 +1,5 @@
-#ifndef POSTGRES_CORE_HPP
-#define POSTGRES_CORE_HPP
+#ifndef DB_CORE_SINGLETON_HPP
+#define DB_CORE_SINGLETON_HPP
 
 #include "./pg.hpp"
 #include "entities/log/main.hpp"

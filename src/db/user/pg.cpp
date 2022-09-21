@@ -17,7 +17,7 @@ db::UserPostgres::UserPostgres(Postgres* pg) : pg(pg) {
 }
 
 tl::expected<std::shared_ptr<entity::User>, entity::Log>
-db::UserPostgres::get_user_by_username_impl(std::string& username) {
+db::UserPostgres::get_user_by_username_impl(std::string& username) noexcept {
 
   auto result_exp = this->pg->query(
       this->get_user_statement, {username}, this->get_user_types

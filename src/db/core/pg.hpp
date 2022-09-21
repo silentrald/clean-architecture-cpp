@@ -72,7 +72,7 @@ struct PostgresStatement {
 class Postgres {
 private:
   std::deque<PGconn*> pool;
-  interface::Logger* logger;
+  /* interface::Logger* logger; */
   std::counting_semaphore<> semaphore;
   std::optional<entity::Log> error = std::nullopt;
 
@@ -97,8 +97,8 @@ public:
 
   Postgres(
       const std::string& host, const std::string& port, const std::string& user,
-      const std::string& password, const std::string& db, uint num_pool = 1U,
-      interface::Logger* logger = interface::get_logger()
+      const std::string& password, const std::string& db, uint num_pool = 1U
+      /* interface::Logger* logger = interface::get_logger() */
   );
   ~Postgres();
 

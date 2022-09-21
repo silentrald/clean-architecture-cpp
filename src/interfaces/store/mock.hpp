@@ -7,7 +7,7 @@
 namespace interface {
 struct MockStoreConfig {};
 
-class MockStore : IStore<MockStore> {
+class MockStore : public IStore<MockStore> {
 private:
   MockStoreConfig config;
 

@@ -1,5 +1,5 @@
-#ifndef ORE_INTERFACE_MAIN_HPP
-#define ORE_INTERFACE_MAIN_HPP
+#ifndef STORE_INTERFACE_SINGLETON_HPP
+#define STORE_INTERFACE_SINGLETON_HPP
 
 #include "./redis.hpp"
 #include "entities/log/main.hpp"
@@ -7,6 +7,7 @@
 #include <exception>
 #include <memory>
 #include <mutex>
+
 
 namespace interface {
 
@@ -18,7 +19,9 @@ struct StoreConfig {
   uint pool;
 };
 
-using Store = IStore<RedisStore>;
+using DefStore = RedisStore;
+
+extern std::unique_ptr<interface::RedisStore> store;
 
 [[nodiscard]] std::optional<entity::Log> init_store(
     const StoreConfig& config =
@@ -27,13 +30,19 @@ using Store = IStore<RedisStore>;
             .port = STORE_DEFAULT_PORT,
             .pool = 1U,
         }
-);
+) noexcept;
 
-[[nodiscard]] Store* get_store();
+template <typename Store = DefStore>
+[[nodiscard]] IStore<Store>* get_store() noexcept {
+  if (store == nullptr) {
+    return nullptr;
+  }
 
-// For debugging
-void clear_store();
+  return store.get();
+}
 
+// TODO: Debugging
+void clear_store() noexcept;
 } // namespace interface
 
 #endif

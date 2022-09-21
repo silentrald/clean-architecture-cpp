@@ -19,39 +19,39 @@
 
 namespace http::server {
 
-struct response {
-  enum status_type {
-    ok = 200,
-    created = 201,
-    accepted = 202,
-    no_content = 204,
-    multiple_choices = 300,
-    moved_permanently = 301,
-    moved_temporarily = 302,
-    not_modified = 304,
-    bad_request = 400,
-    unauthorized = 401,
-    forbidden = 403,
-    not_found = 404,
-    internal_server_error = 500,
-    not_implemented = 501,
-    bad_gateway = 502,
-    service_unavailable = 503
-  } status = status_type::ok;
+const char* const ContentTypeStrings[] = {"application/json"};
 
+const int STATUS_OK = 200;
+const int STATUS_CREATED = 201;
+const int STATUS_ACCEPTED = 202;
+const int STATUS_NO_CONTENT = 204;
+const int STATUS_MULTIPLE_CHOICES = 300;
+const int STATUS_MOVED_PERMANENTLY = 301;
+const int STATUS_MOVED_TEMPORARILY = 302;
+const int STATUS_NOT_MODIFIED = 303;
+const int STATUS_BAD_REQUEST = 400;
+const int STATUS_UNAUTHORIZED = 401;
+const int STATUS_FORBIDDEN = 403;
+const int STATUS_NOT_FOUND = 404;
+const int STATUS_INTERNAL_SERVER_ERROR = 500;
+const int STATUS_NOT_IMPLEMENTED = 501;
+const int STATUS_BAD_GATEWAY = 502;
+const int STATUS_SERVICE_UNAVAILABLE = 503;
+
+struct response {
+  int status = 200; // NOLINT
   std::vector<header> headers;
   std::vector<cookie> cookies;
   std::string content{};
   std::string content_length = "0";
 
-  /* enum content_type_enum { */
-  /*   text_html = 0, */
-  /* } content_type = content_type_enum::text_html; */
+  enum content_type_enum {
+    application_json = 0,
+    text_html = 1
+  } content_type = content_type_enum::application_json;
 
-  void set_content(const std::string& content);
-  void set_content(const char* content);
   std::vector<asio::const_buffer> to_buffers();
-  static response stock_response(status_type status);
+  static response stock_response(int status);
 };
 
 } // namespace http::server

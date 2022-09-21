@@ -13,14 +13,14 @@ private:
 
 public:
   tl::expected<std::shared_ptr<entity::User>, entity::Log>
-  get_user_by_username(std::string& username) {
+  get_user_by_username(std::string& username) noexcept {
     return static_cast<T*>(this)->get_user_by_username_impl(username);
   }
 
   friend T;
 
   tl::expected<std::shared_ptr<entity::User>, entity::Log>
-  get_user_by_username_impl(std::string& username) = delete;
+  get_user_by_username_impl(std::string& username) noexcept = delete;
 };
 } // namespace db
 

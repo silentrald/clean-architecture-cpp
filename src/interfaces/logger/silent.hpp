@@ -4,7 +4,7 @@
 #include "./build.hpp"
 
 namespace interface {
-class SilentLogger : ILogger<SilentLogger> {
+class SilentLogger : public ILogger<SilentLogger> {
 public:
   void fatal_impl(const char* text) {}
   void error_impl(const char* text) {}

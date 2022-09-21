@@ -7,17 +7,17 @@
 using namespace interface;
 
 RedisStore::RedisStore(
-    const std::string& host, int port, uint num_pool, Logger* logger
+    const std::string& host, int port, uint num_pool
 )
-    : logger(logger), semaphore(num_pool) {
+    : semaphore(num_pool) {
 
-  if (logger == nullptr) {
-    this->error = entity::Log{
-        .msg = "Logger is not initialized",
-        .file = "interfaces/store/redis.cpp",
-        .function = "RedisStore::RedisStore"};
-    return;
-  }
+  /* if (logger == nullptr) { */
+  /*   this->error = entity::Log{ */
+  /*       .msg = "Logger is not initialized", */
+  /*       .file = "interfaces/store/redis.cpp", */
+  /*       .function = "RedisStore::RedisStore"}; */
+  /*   return; */
+  /* } */
 
   for (uint i = 0; i < num_pool; i++) {
     redisContext* ctx = redisConnect(host.c_str(), port);
@@ -48,9 +48,9 @@ RedisStore::~RedisStore() {
     return;
   }
 
-  this->logger->debug(
-      "Freeing " + std::to_string(this->pool.size()) + " redis thread pools"
-  );
+  /* this->logger->debug( */
+  /*     "Freeing " + std::to_string(this->pool.size()) + " redis thread pools" */
+  /* ); */
   for (auto& ctx : this->pool) {
     redisFree(ctx);
   }

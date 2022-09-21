@@ -73,13 +73,13 @@ void request_handler::handle_request(request* req, response* res) {
 
   std::string path = req->uri.substr(0, req->uri.find('?'));
   if (!path.starts_with(this->base_path)) {
-    res->status = response::not_found;
+    res->status = STATUS_NOT_FOUND;
     return;
   }
 
   auto pos = this->map.find(req->method);
   if (pos == this->map.end()) {
-    res->status = response::not_found;
+    res->status = STATUS_NOT_FOUND;
     return;
   }
 
@@ -87,7 +87,7 @@ void request_handler::handle_request(request* req, response* res) {
   // Base Case: only "/" path
   if (path.size() == this->base_path.size()) {
     if (node->cb == nullptr) {
-      res->status = response::not_found;
+      res->status = STATUS_NOT_FOUND;
     } else {
       node->cb(req, res);
     }
@@ -100,7 +100,7 @@ void request_handler::handle_request(request* req, response* res) {
   while ((end_cursor = path.find('/', start_cursor)) != std::string::npos) {
     pos = node->map.find(path.substr(start_cursor, end_cursor - start_cursor));
     if (pos == node->map.end()) {
-      res->status = response::not_found;
+      res->status = STATUS_NOT_FOUND;
       return;
     }
     node = pos->second.get();
@@ -110,13 +110,13 @@ void request_handler::handle_request(request* req, response* res) {
   // Check if last word if the path
   pos = node->map.find(path.substr(start_cursor));
   if (pos == node->map.end()) {
-    res->status = response::not_found;
+    res->status = STATUS_NOT_FOUND;
     return;
   }
   node = pos->second.get();
 
   if (node->cb == nullptr) {
-    res->status = response::not_found;
+    res->status = STATUS_NOT_FOUND;
     return;
   }
 
