@@ -1,12 +1,17 @@
 #include "./wrapper.hpp"
+#include "interfaces/logger/singleton.hpp"
+#include "interfaces/store/singleton.hpp"
+#include "tl/expected.hpp"
 #include <cstring>
 #include <exception>
+#include <optional>
 
 namespace adapter {
 
 template <>
 [[nodiscard]] tl::expected<json, entity::Log>
-WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl() noexcept {
+WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl(
+) noexcept {
   try {
     return json::parse(this->req->body);
   } catch (std::exception& err) {
@@ -16,6 +21,13 @@ WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl()
          .function = "WrapperRequest::get_body()"}
     );
   }
+}
+
+template <>
+[[nodiscard]] tl::expected<std::nullopt_t, entity::Log>
+WrapperRequest<std::nullopt_t, interface::DefStore, interface::DefLogger>::
+    get_body_impl() noexcept {
+  return std::nullopt;
 }
 
 // Response

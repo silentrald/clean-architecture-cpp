@@ -8,6 +8,7 @@
 #include "interfaces/logger/singleton.hpp"
 #include "interfaces/store/singleton.hpp"
 #include <exception>
+#include <optional>
 #include <string>
 
 namespace use_case {
@@ -21,7 +22,7 @@ public:
 
   template <typename Req, typename Res>
   void execute(
-      adapter::IRequest<adapter::json, Req>& req, adapter::IResponse<Res>& res
+      adapter::IRequest<std::nullopt_t, Req>& req, adapter::IResponse<Res>& res
   ) noexcept {
     if (!req.is_auth()) {
       res.set_status(adapter::ResponseStatus::unauthorized);
@@ -31,12 +32,10 @@ public:
     bool logout = req.clear_session_user();
     if (!logout) {
       auto user = req.get_session_user();
-      
+
       // Avoids sigsegv
       if (user != nullptr) {
-        this->logger->error(
-          "Could not logout " + user->get_username()
-        );
+        this->logger->error("Could not logout " + user->get_username());
       }
 
       res.set_status(adapter::ResponseStatus::internal_server_error);

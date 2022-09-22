@@ -1,5 +1,5 @@
-#ifndef LOGIN_USE_CASE_HTTP
-#define LOGIN_USE_CASE_HTTP
+#ifndef LOGIN_AUTH_USE_CASE_HTTP
+#define LOGIN_AUTH_USE_CASE_HTTP
 
 #include "adapters/http/build.hpp"
 #include "adapters/http/factory.hpp"

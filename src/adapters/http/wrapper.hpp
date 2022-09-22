@@ -117,7 +117,7 @@ WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl()
 
 template <typename Body, typename Store, typename Logger>
 [[nodiscard]] std::string
-WrapperRequest<Body, Store, Logger>::get_session_key() noexcept {
+WrapperRequest<Body, Store, Logger>::get_session_id_impl() noexcept {
   std::string& ref = this->req->session_id;
   if (!ref.empty()) {
     return ref;
@@ -142,21 +142,21 @@ template <typename Body, typename Store, typename Logger>
 
 template <typename Body, typename Store, typename Logger>
 [[nodiscard]] std::string
-WrapperRequest<Body, Store, Logger>::get_session_id_impl() noexcept {
-  return SESSION_PREFIX + this->get_session_key();
+WrapperRequest<Body, Store, Logger>::get_session_key() noexcept {
+  return SESSION_PREFIX + this->get_session_id_impl();
 }
 
 template <typename Body, typename Store, typename Logger>
 std::optional<entity::Log>
 WrapperRequest<Body, Store, Logger>::set_session_user_impl(entity::User* user) noexcept {
-  std::string key = this->get_session_key();
-  this->store->set_string(
-      key, R"({"id": ")" + user->get_id() + R"(, "username": ")" +
-               user->get_username() + R"(})"
-  );
+  json user_json = {
+    {"id", user->get_id()},
+    {"username", user->get_username()}
+  };
+  this->store->set_string(this->get_session_key(), user_json.dump());
   this->res->cookies.emplace_back(http::server::cookie{
       .name = "SESSION",
-      .value = key,
+      .value = this->get_session_id_impl(),
       .path = "/",
       .same_site = "strict",
       .max_age = 3600,
