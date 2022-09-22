@@ -77,3 +77,12 @@ path/to/project/build> ./clean_architecture
 ## Unit Tests
 _**TO BE ADDED**_
 
+## Documentation
+
+### Swagger UI (Optional)
+This project uses NodeJS to simplify the work. To run the configuration file `swagger/openapi.yaml`, clone the swagger editor and then import the file.
+[swagger-editor](https://github.com/swagger-api/swagger-editor)
+
+Alternatively, you can use the online version of swagger and import the file over there
+[online version](https://editor.swagger.io)
+

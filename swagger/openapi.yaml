@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Clean Architecture CPP
+  description: |-
+    This is a sample swagger ui for this api.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+  # - url: http
+tags:
+  - name: auth
+    description: API Endpoint for authentication
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: SESSION
+paths:
+  /user:
+    get:
+      tags:
+        - auth
+      summary: User Info
+      description: Gets the user information of the current logged in user
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Returns the public user info
+        '401':
+          description: User not authenticated
+        '500':
+          description: Server Error
+  /auth/login:
+    post:
+      tags: 
+        - auth
+      summary: User Login
+      description: User Login with user credentials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+          application/flatbuffer:
+            schema:
+              type: string
+      responses:
+        '204':
+          description: Login Successful
+        '400':
+          description: 'TODO: to be impl'
+        '401':
+          description: Auth Failed
+        '403':
+          description: User already logged in
+        '500':
+          description: Server Error
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: User Logout
+      description: User Logout
+      security:
+        - cookieAuth: []
+      responses:
+        '204':
+          description: Logout Successful
+        '400':
+          description: 'TODO: to be impl'
+        '401':
+          description: User not authenticated
+        '500':
+          description: Server Error (Problem with the database store)
+    
