@@ -44,7 +44,7 @@ private:
       return tl::unexpected<entity::Log>({.msg = "Empty Body"});
     }
 
-    if (req.get_content_type() == "application/flatbuffers") {
+    if (req.get_content_type() == "application/flatbuffer") {
       flatbuffers::Verifier verifier{(uint8_t*)body.data(), body.size()};
       const auto* buffer = flatbuffers::GetRoot<fb::LoginRequest>(body.data());
       if (!buffer->Verify(verifier)) {
