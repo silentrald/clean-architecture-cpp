@@ -2,8 +2,6 @@
 #define HTTP_ADAPTER_WRAPPER_HPP
 
 #include "adapters/http/build.hpp"
-#include "asio/detail/chrono.hpp"
-#include "asio/high_resolution_timer.hpp"
 #include "entities/log/main.hpp"
 #include "entities/user/factory.hpp"
 #include "fbs/auth.hpp"
@@ -11,14 +9,18 @@
 #include "interfaces/logger/singleton.hpp"
 #include "interfaces/store/singleton.hpp"
 #include "tl/expected.hpp"
+#include "utils/string.hpp"
 #include "wrappers/http/cookie.hpp"
 #include "wrappers/http/request.hpp"
 #include "wrappers/http/response.hpp"
 #include <chrono>
+#include <cstdint>
 #include <exception>
+#include <flatbuffers/buffer.h>
+#include <flatbuffers/flatbuffer_builder.h>
 #include <flatbuffers/table.h>
+#include <flatbuffers/verifier.h>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <sys/random.h> // NOTE: Can be changed to libsodium
 #include <unordered_map>
@@ -34,16 +36,14 @@ const char* const SESSION_PREFIX = "sess:";
 const char* const SESSION_NAME = "SESSION";
 
 template <
-    typename Body, typename Store = interface::DefStore,
+    typename Store = interface::DefStore,
     typename Logger = interface::DefLogger>
-class WrapperRequest
-    : public IRequest<Body, WrapperRequest<Body, Store, Logger>> {
+class WrapperRequest : public IRequest<WrapperRequest<Store, Logger>> {
 private:
   http::server::request* req;
   http::server::response* res;
   interface::IStore<Store>* store;
   interface::ILogger<Logger>* logger;
-  std::unique_ptr<Body> body;
   std::chrono::system_clock::time_point start;
 
   [[nodiscard]] std::string get_session_key() noexcept;
@@ -74,7 +74,8 @@ public:
     this->start = std::chrono::high_resolution_clock::now();
   }
 
-  [[nodiscard]] tl::expected<Body*, entity::Log> get_body_impl() noexcept;
+  [[nodiscard]] std::string get_content_type_impl() noexcept;
+  [[nodiscard]] std::string get_body_impl() noexcept;
 
   /* [[nodiscard]] std::vector<std::string> get_params() const; */
 
@@ -110,25 +111,21 @@ public:
   bool clear_session_user_impl() noexcept;
 };
 
-template <typename Body, typename Store, typename Logger>
-[[nodiscard]] tl::expected<Body*, entity::Log>
-WrapperRequest<Body, Store, Logger>::get_body_impl() noexcept {
-  return tl::unexpected<entity::Log>({.msg = "Invalid"});
+template <typename Store, typename Logger>
+[[nodiscard]] std::string
+WrapperRequest<Store, Logger>::get_content_type_impl() noexcept {
+  return this->req->content_type;
 }
 
-template <>
-[[nodiscard]] tl::expected<json*, entity::Log>
-WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl(
-) noexcept;
-
-template <>
-[[nodiscard]] tl::expected<fb::LoginRequest*, entity::Log>
-WrapperRequest<fb::LoginRequest, interface::DefStore, interface::DefLogger>::
-    get_body_impl() noexcept;
-
-template <typename Body, typename Store, typename Logger>
+template <typename Store, typename Logger>
 [[nodiscard]] std::string
-WrapperRequest<Body, Store, Logger>::get_session_id_impl() noexcept {
+WrapperRequest<Store, Logger>::get_body_impl() noexcept {
+  return this->req->body;
+}
+
+template <typename Store, typename Logger>
+[[nodiscard]] std::string
+WrapperRequest<Store, Logger>::get_session_id_impl() noexcept {
   std::string& ref = this->req->session_id;
   if (!ref.empty()) {
     return ref;
@@ -146,24 +143,31 @@ WrapperRequest<Body, Store, Logger>::get_session_id_impl() noexcept {
   return ref;
 }
 
-template <typename Body, typename Store, typename Logger>
-[[nodiscard]] bool
-WrapperRequest<Body, Store, Logger>::is_auth_impl() noexcept {
+template <typename Store, typename Logger>
+[[nodiscard]] bool WrapperRequest<Store, Logger>::is_auth_impl() noexcept {
   return this->store->exists(this->get_session_key());
 }
 
-template <typename Body, typename Store, typename Logger>
+template <typename Store, typename Logger>
 [[nodiscard]] std::string
-WrapperRequest<Body, Store, Logger>::get_session_key() noexcept {
+WrapperRequest<Store, Logger>::get_session_key() noexcept {
   return SESSION_PREFIX + this->get_session_id_impl();
 }
 
-template <typename Body, typename Store, typename Logger>
+template <typename Store, typename Logger>
 std::optional<entity::Log>
-WrapperRequest<Body, Store, Logger>::set_session_user_impl(entity::User* user
+WrapperRequest<Store, Logger>::set_session_user_impl(entity::User* user
 ) noexcept {
-  json user_json = {{"id", user->get_id()}, {"username", user->get_username()}};
-  this->store->set_string(this->get_session_key(), user_json.dump());
+  flatbuffers::FlatBufferBuilder builder(256);
+  auto id = builder.CreateString(user->get_id());
+  auto username = builder.CreateString(user->get_username());
+  auto offset = fb::CreateUser(builder, id, username);
+  builder.Finish(offset);
+
+  const auto* sample = flatbuffers::GetRoot<fb::User>(builder.GetBufferPointer());
+  this->store->set_byte_array(
+      this->get_session_key(), builder.GetBufferPointer(), builder.GetSize()
+  );
   this->res->cookies.emplace_back(http::server::cookie{
       .name = "SESSION",
       .value = this->get_session_id_impl(),
@@ -175,27 +179,30 @@ WrapperRequest<Body, Store, Logger>::set_session_user_impl(entity::User* user
   return std::nullopt;
 }
 
-// TODO: Add support with flatbuffers
-template <typename Body, typename Store, typename Logger>
+template <typename Store, typename Logger>
 std::unique_ptr<entity::User>
-WrapperRequest<Body, Store, Logger>::get_session_user_impl() noexcept {
-  auto user_json = this->store->get_string(this->get_session_key());
-  if (!user_json || !*user_json) {
+WrapperRequest<Store, Logger>::get_session_user_impl() noexcept {
+  auto data = this->store->get_byte_array(this->get_session_key());
+  if (!data || !*data) {
     return nullptr;
   }
 
-  json user = json::parse(**user_json);
-  try {
-    std::string id = user.at("id");
-    std::string username = user.at("username");
-    return std::make_unique<entity::User>(id, username);
-  } catch (std::exception& e) {
+  std::vector<uint8_t>& user_data = **data;
+  flatbuffers::Verifier verifier{user_data.data(), user_data.size()};
+  const auto* user = flatbuffers::GetRoot<fb::User>(user_data.data());
+
+  if (!user->Verify(verifier)) {
+    this->logger->debug("Invalid data");
     return nullptr;
   }
+
+  std::string id = user->id()->c_str();
+  std::string username = user->username()->c_str();
+  return std::make_unique<entity::User>(id, username);
 }
 
-template <typename Body, typename Store, typename Logger>
-bool WrapperRequest<Body, Store, Logger>::clear_session_user_impl() noexcept {
+template <typename Store, typename Logger>
+bool WrapperRequest<Store, Logger>::clear_session_user_impl() noexcept {
   return this->store->del(this->get_session_key());
 }
 

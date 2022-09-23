@@ -11,17 +11,16 @@ namespace adapter {
 
 struct MockRequestConfig {
   std::string body = "{}";
+  std::string content_type;
   std::string session_id;
   std::optional<entity::User> user = std::nullopt;
   bool auth;
   bool session_cleared;
 };
 
-template <typename Body>
-class MockRequest : public IRequest<Body, MockRequest<Body>> {
+class MockRequest : public IRequest<MockRequest> {
 private:
   MockRequestConfig config;
-  std::unique_ptr<Body> body;
 
 public:
   explicit MockRequest(
@@ -29,7 +28,13 @@ public:
   )
       : config(config) {}
 
-  [[nodiscard]] tl::expected<Body*, entity::Log> get_body_impl() noexcept;
+  [[nodiscard]] std::string get_content_type_impl() noexcept {
+    return this->config.content_type;
+  }
+
+  [[nodiscard]] std::string get_body_impl() noexcept {
+    return this->config.body;
+  }
 
   [[nodiscard]] bool is_auth_impl() noexcept {
     return this->config.auth;

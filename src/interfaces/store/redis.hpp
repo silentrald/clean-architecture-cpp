@@ -12,6 +12,7 @@
 #include <optional>
 #include <semaphore>
 #include <string>
+#include <vector>
 
 namespace interface {
 class RedisStore : public IStore<RedisStore> {
@@ -49,14 +50,17 @@ public:
   ) noexcept;
   tl::expected<std::optional<std::string>, entity::Log>
   get_string_impl(const char* key) noexcept;
+  tl::expected<std::optional<std::vector<uint8_t>>, entity::Log>
+  get_byte_array_impl(const char* key) noexcept;
 
   bool set_int_impl(const char* key, int val) noexcept;
   bool set_int64_impl(const char* key, int64_t val) noexcept;
   bool set_float_impl(const char* key, float val) noexcept;
   bool set_double_impl(const char* key, double val) noexcept;
   bool set_bool_impl(const char* key, bool val) noexcept;
-  /* bool set_string_impl(const char* key, const std::string& val) noexcept; */
   bool set_string_impl(const char* key, const char* val) noexcept;
+  bool
+  set_byte_array_impl(const char* key, const uint8_t* val, size_t size) noexcept;
 
   bool exists_impl(const char* key) noexcept;
   bool del_impl(const char* key) noexcept;

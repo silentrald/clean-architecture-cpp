@@ -32,12 +32,16 @@ enum class ResponseStatus {
 enum class ContentType { application_json, text_html };
 
 // Factory
-template <typename Body, typename T> class IRequest {
+template <typename T> class IRequest {
 private:
   IRequest() = default;
 
 public:
-  [[nodiscard]] tl::expected<Body*, entity::Log> get_body() noexcept {
+  [[nodiscard]] std::string get_content_type() noexcept {
+    return static_cast<T*>(this)->get_content_type_impl();
+  }
+
+  [[nodiscard]] std::string get_body() noexcept {
     return static_cast<T*>(this)->get_body_impl();
   }
 
@@ -63,8 +67,8 @@ public:
 
   friend T;
 
-  [[nodiscard]] tl::expected<Body*, entity::Log>
-  get_body_impl() noexcept = delete;
+  [[nodiscard]] std::string get_content_type_impl() noexcept = delete;
+  [[nodiscard]] std::string get_body_impl() noexcept = delete;
   [[nodiscard]] bool is_auth_impl() noexcept = delete;
   [[nodiscard]] std::string get_session_id_impl() noexcept = delete;
   std::optional<entity::User> get_session_user_impl() noexcept = delete;

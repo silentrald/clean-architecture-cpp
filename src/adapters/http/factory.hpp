@@ -11,9 +11,9 @@
 namespace adapter {
 
 template <
-    typename Body, typename Store = interface::DefStore,
+    typename Store = interface::DefStore,
     typename Logger = interface::DefLogger>
-using Request = IRequest<Body, WrapperRequest<Body, Store, Logger>>;
+using Request = IRequest<WrapperRequest<Store, Logger>>;
 using Response = IResponse<WrapperResponse>;
 
 } // namespace adapter

@@ -1,14 +1,18 @@
 #include "./redis.hpp"
+#include "entities/log/main.hpp"
 #include "read.h"
+#include "tl/expected.hpp"
 #include "utils/string.hpp"
+#include <cstdint>
 #include <cstdlib>
+#include <cstring>
+#include <optional>
 #include <string>
+#include <vector>
 
 using namespace interface;
 
-RedisStore::RedisStore(
-    const std::string& host, int port, uint num_pool
-)
+RedisStore::RedisStore(const std::string& host, int port, uint num_pool)
     : semaphore(num_pool) {
 
   /* if (logger == nullptr) { */
@@ -49,7 +53,8 @@ RedisStore::~RedisStore() {
   }
 
   /* this->logger->debug( */
-  /*     "Freeing " + std::to_string(this->pool.size()) + " redis thread pools" */
+  /*     "Freeing " + std::to_string(this->pool.size()) + " redis thread pools"
+   */
   /* ); */
   for (auto& ctx : this->pool) {
     redisFree(ctx);
@@ -300,6 +305,42 @@ RedisStore::get_string_impl(const char* key) noexcept {
   return tl::unexpected<entity::Log>(log);
 }
 
+tl::expected<std::optional<std::vector<uint8_t>>, entity::Log>
+RedisStore::get_byte_array_impl(const char* key) noexcept {
+  redisContext* ctx = this->get_context();
+  // clang-format off
+  auto* reply = static_cast<redisReply*>(
+    redisCommand(ctx, "GET %s", key)
+  );
+  // clang-format on
+  this->release_context(ctx);
+
+  if (reply->type == REDIS_REPLY_STRING) {
+    std::vector<uint8_t> val;
+    val.resize(reply->len);
+    std::memcpy(val.data(), reply->str, reply->len);
+    freeReplyObject(reply);
+    return val;
+  }
+
+  if (reply->type == REDIS_REPLY_NIL) {
+    freeReplyObject(reply);
+    return std::nullopt;
+  }
+
+  entity::Log log{
+      .msg = "Unknown error",
+      .file = "interfaces/store/redis.cpp",
+      .function = "RedisStore::get_double_impl(const char*)"};
+
+  if (reply->type == REDIS_REPLY_ERROR) {
+    log.msg = reply->str;
+  }
+
+  freeReplyObject(reply);
+  return tl::unexpected<entity::Log>(log);
+}
+
 // GET
 
 /*** SET ***/
@@ -392,21 +433,22 @@ bool RedisStore::set_string_impl(const char* key, const char* val) noexcept {
   return set;
 }
 
-/* template <> bool RedisStore::set_impl(const char* key, const std::string&
- * val) { */
-/*   redisContext* ctx = this->get_context(); */
-/*   // clang-format off */
-/*   auto* reply = static_cast<redisReply*>( */
-/*       redisCommand(ctx, "SET %s %s", key, val.c_str()) */
-/*   ); */
-/*   // clang-format on */
-/*   this->release_context(ctx); */
+bool RedisStore::set_byte_array_impl(
+    const char* key, const uint8_t* val, size_t size
+) noexcept {
+  redisContext* ctx = this->get_context();
+  // clang-format off
+  auto* reply = static_cast<redisReply*>(
+    redisCommand(ctx, "SET %s %b", key, val, size)
+  );
+  // clang-format on
+  this->release_context(ctx);
 
-/*   bool set = reply->type != REDIS_REPLY_ERROR; */
-/*   freeReplyObject(reply); */
+  bool set = reply->type != REDIS_REPLY_ERROR;
+  freeReplyObject(reply);
 
-/*   return set; */
-/* } */
+  return set;
+}
 
 // SET
 

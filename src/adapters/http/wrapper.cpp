@@ -4,57 +4,16 @@
 #include "interfaces/logger/singleton.hpp"
 #include "interfaces/store/singleton.hpp"
 #include "tl/expected.hpp"
+#include <cstdint>
 #include <cstring>
 #include <exception>
 #include <flatbuffers/buffer.h>
 #include <flatbuffers/table.h>
+#include <flatbuffers/verifier.h>
 #include <memory>
 #include <optional>
 
 namespace adapter {
-
-template <>
-[[nodiscard]] tl::expected<json*, entity::Log>
-WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl(
-) noexcept {
-  if (this->body) {
-    return this->body.get();
-  }
-
-  try {
-    this->body = std::make_unique<json>(json::parse(this->req->body));
-    return this->body.get();
-  } catch (std::exception& err) {
-    return tl::unexpected<entity::Log>(
-        {.msg = err.what(),
-         .file = "adapters/http/wrapper.cpp",
-         .function = "WrapperRequest::get_body_impl()"}
-    );
-  }
-}
-
-template <>
-[[nodiscard]] tl::expected<fb::LoginRequest*, entity::Log>
-WrapperRequest<fb::LoginRequest, interface::DefStore, interface::DevLogger>::
-    get_body_impl() noexcept {
-  try {
-    return flatbuffers::GetMutableRoot<fb::LoginRequest>(this->req->body.data());
-  } catch (std::exception& err) {
-    return tl::unexpected<entity::Log>(
-        {.msg = err.what(),
-         .file = "adapters/http/wrapper.cpp",
-         .function = "WrapperRequest::get_body_impl()"}
-    );
-  }
-}
-
-template <>
-[[nodiscard]] tl::expected<std::nullopt_t*, entity::Log>
-WrapperRequest<std::nullopt_t, interface::DefStore, interface::DefLogger>::
-    get_body_impl() noexcept {
-  return nullptr;
-}
-
 // Response
 void WrapperResponse::set_content_type_impl(const ContentType& type) noexcept {
   switch (type) {

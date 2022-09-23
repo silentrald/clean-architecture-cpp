@@ -5,7 +5,7 @@ table LoginRequest {
   password: string;
 }
 
-table GetUserResponse {
+table User {
   id: string;
   username: string;
 }

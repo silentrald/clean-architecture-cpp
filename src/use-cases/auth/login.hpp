@@ -5,16 +5,28 @@
 #include "adapters/http/factory.hpp"
 #include "adapters/http/wrapper.hpp"
 #include "db/user/singleton.hpp"
+#include "entities/log/main.hpp"
 #include "fbs/auth.hpp"
 #include "interfaces/logger/build.hpp"
 #include "interfaces/logger/singleton.hpp"
 #include "interfaces/store/redis.hpp"
 #include "interfaces/store/singleton.hpp"
+#include "nlohmann/json.hpp"
+#include "tl/expected.hpp"
+#include <cstdint>
 #include <exception>
+#include <flatbuffers/buffer.h>
 #include <flatbuffers/string.h>
+#include <flatbuffers/verifier.h>
 #include <string>
 
 namespace use_case {
+
+struct LoginAuthBody {
+  std::string username;
+  std::string password;
+};
+
 template <
     typename UserDb = db::DefUser, typename Store = interface::DefStore,
     typename Logger = interface::DefLogger>
@@ -24,6 +36,35 @@ private:
   interface::IStore<Store>* store;
   interface::ILogger<Logger>* logger;
 
+  template <typename Req>
+  tl::expected<LoginAuthBody, entity::Log>
+  parse_body(adapter::IRequest<Req>& req) noexcept {
+    std::string body = req.get_body();
+    if (body.empty()) {
+      return tl::unexpected<entity::Log>({.msg = "Empty Body"});
+    }
+
+    if (req.get_content_type() == "application/flatbuffers") {
+      flatbuffers::Verifier verifier{(uint8_t*)body.data(), body.size()};
+      const auto* buffer = flatbuffers::GetRoot<fb::LoginRequest>(body.data());
+      if (!buffer->Verify(verifier)) {
+        return tl::unexpected<entity::Log>({.msg = "Invalid body"});
+      }
+
+      return LoginAuthBody{
+          .username = buffer->username()->c_str(),
+          .password = buffer->password()->c_str()};
+    }
+
+    try {
+      auto json = nlohmann::json::parse(body);
+      return LoginAuthBody{
+          .username = json["username"], .password = json["password"]};
+    } catch (std::exception& err) {
+      return tl::unexpected<entity::Log>({.msg = "Invalid body"});
+    }
+  }
+
 public:
   LoginAuthUseCase(
       db::IUser<UserDb>* user_db, interface::IStore<Store>* store,
@@ -32,38 +73,20 @@ public:
       : user_db(user_db), store(store), logger(logger) {}
 
   template <typename Req, typename Res>
-  void execute(
-      adapter::IRequest<adapter::json, Req>& req,
-      adapter::IResponse<Res>& res
-  ) noexcept {
+  void
+  execute(adapter::IRequest<Req>& req, adapter::IResponse<Res>& res) noexcept {
     if (req.is_auth()) {
       res.set_status(adapter::ResponseStatus::forbidden);
       return;
     }
 
-    auto exp_body = req.get_body();
-    if (!exp_body) {
-      res.set_status(adapter::ResponseStatus::unauthorized);
-      return;
-    }
-    auto body = *exp_body;
-
-    std::string username;
-    std::string password;
-    try {
-      username = body->at("username");
-      password = body->at("password");
-    } catch (std::exception& err) {
+    auto body = this->parse_body(req);
+    if (!body || body->username.empty() || body->password.empty()) {
       res.set_status(adapter::ResponseStatus::unauthorized);
       return;
     }
 
-    if (username.empty() || password.empty()) {
-      res.set_status(adapter::ResponseStatus::unauthorized);
-      return;
-    }
-
-    auto user_exp = this->user_db->get_user_by_username(username);
+    auto user_exp = this->user_db->get_user_by_username(body->username);
     if (!user_exp) { // User does not exist
       this->logger->warn(user_exp.error().to_string());
       res.set_status(adapter::ResponseStatus::unauthorized);
@@ -71,7 +94,7 @@ public:
     }
     auto user = *user_exp;
 
-    auto same = user->verify_password(password);
+    auto same = user->verify_password(body->password);
     if (!same) {
       this->logger->warn(same.error().to_string());
       res.set_status(adapter::ResponseStatus::unauthorized);
@@ -80,60 +103,7 @@ public:
 
     if (!*same) {
       this->logger->warn(
-          "Someone is trying to login to this account: " + username
-      );
-      res.set_status(adapter::ResponseStatus::unauthorized);
-      return;
-    }
-
-    // TODO: May return an error
-    req.set_session_user(user.get());
-
-    res.set_status(adapter::ResponseStatus::no_content);
-  }
-
-  template <typename Req, typename Res>
-  void execute(
-      adapter::IRequest<fb::LoginRequest, Req>& req,
-      adapter::IResponse<Res>& res
-  ) noexcept {
-    if (req.is_auth()) {
-      res.set_status(adapter::ResponseStatus::forbidden);
-      return;
-    }
-
-    auto exp_body = req.get_body();
-    if (!exp_body) {
-      res.set_status(adapter::ResponseStatus::unauthorized);
-      return;
-    }
-    auto body = *exp_body;
-
-    std::string username = flatbuffers::GetString(body->username());
-    std::string password = flatbuffers::GetString(body->password());
-    if (username.empty() || password.empty()) {
-      res.set_status(adapter::ResponseStatus::unauthorized);
-      return;
-    }
-
-    auto user_exp = this->user_db->get_user_by_username(username);
-    if (!user_exp) { // User does not exist
-      this->logger->warn(user_exp.error().to_string());
-      res.set_status(adapter::ResponseStatus::unauthorized);
-      return;
-    }
-    auto user = *user_exp;
-
-    auto same = user->verify_password(password);
-    if (!same) {
-      this->logger->warn(same.error().to_string());
-      res.set_status(adapter::ResponseStatus::unauthorized);
-      return;
-    }
-
-    if (!*same) {
-      this->logger->warn(
-          "Someone is trying to login to this account: " + username
+          "Someone is trying to login to this account: " + body->username
       );
       res.set_status(adapter::ResponseStatus::unauthorized);
       return;

@@ -4,6 +4,7 @@
 #include "adapters/http/factory.hpp"
 #include "adapters/http/wrapper.hpp"
 #include "fbs/auth.hpp"
+#include "interfaces/logger/singleton.hpp"
 #include "use-cases/auth/singleton.hpp"
 #include "wrappers/http/request.hpp"
 #include "wrappers/http/response.hpp"
@@ -21,7 +22,7 @@ private:
       .path = "/user",
       .cb = [](http::server::request* req,
                http::server::response* res) noexcept {
-        adapter::WrapperRequest<std::nullopt_t> areq(req, res);
+        adapter::WrapperRequest areq(req, res);
         adapter::WrapperResponse ares(res);
         use_case::get_user_auth()->execute(areq, ares);
       }};
@@ -31,14 +32,7 @@ private:
       .path = "/auth/login",
       .cb = [](http::server::request* req,
                http::server::response* res) noexcept {
-        if (req->content_type == "application/flatbuffers") {
-          adapter::WrapperRequest<fb::LoginRequest> areq(req, res);
-          adapter::WrapperResponse ares(res);
-          use_case::login_auth()->execute(areq, ares);
-          return;
-        }
-
-        adapter::WrapperRequest<adapter::json> areq(req, res);
+        adapter::WrapperRequest areq(req, res);
         adapter::WrapperResponse ares(res);
         use_case::login_auth()->execute(areq, ares);
       }};
@@ -48,7 +42,7 @@ private:
       .path = "/auth/logout",
       .cb = [](http::server::request* req,
                http::server::response* res) noexcept {
-        adapter::WrapperRequest<std::nullopt_t> areq(req, res);
+        adapter::WrapperRequest areq(req, res);
         adapter::WrapperResponse ares(res);
         use_case::logout_auth()->execute(areq, ares);
       }};

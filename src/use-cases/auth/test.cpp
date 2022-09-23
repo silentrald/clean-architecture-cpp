@@ -34,7 +34,7 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
         login_auth{&user_db, &store, &logger};
 
     std::string body = R"({"username": "username", "password": "password"})";
-    adapter::MockRequest<adapter::json> req({.body = body});
+    adapter::MockRequest req({.body = body});
     adapter::MockResponse res{};
 
     login_auth.execute(req, res);
@@ -47,7 +47,7 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
         login_auth{nullptr, nullptr, nullptr};
 
     std::string body = R"({"username": "username", "password": "password"})";
-    adapter::MockRequest<adapter::json> req({.body = body, .auth = true});
+    adapter::MockRequest req({.body = body, .auth = true});
     adapter::MockResponse res{};
 
     login_auth.execute(req, res);
@@ -59,7 +59,7 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
         db::MockUser, interface::MockStore, interface::SilentLogger>
         login_auth{nullptr, nullptr, nullptr};
 
-    adapter::MockRequest<adapter::json> req{};
+    adapter::MockRequest req{};
     adapter::MockResponse res{};
 
     login_auth.execute(req, res);
@@ -72,14 +72,14 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
         login_auth{nullptr, nullptr, nullptr};
 
     std::string body1 = R"({"password": "password"})";
-    adapter::MockRequest<adapter::json> req1({.body = body1});
+    adapter::MockRequest req1({.body = body1});
     adapter::MockResponse res1{};
 
     login_auth.execute(req1, res1);
     REQUIRE(res1.status == adapter::ResponseStatus::unauthorized);
 
     std::string body2 = R"({"username": "username"})";
-    adapter::MockRequest<adapter::json> req2({.body = body2});
+    adapter::MockRequest req2({.body = body2});
     adapter::MockResponse res2{};
 
     login_auth.execute(req2, res2);
@@ -92,14 +92,14 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
         login_auth{nullptr, nullptr, nullptr};
 
     std::string body1 = R"({"username": "username", "password": ""})";
-    adapter::MockRequest<adapter::json> req1({.body = body1});
+    adapter::MockRequest req1({.body = body1});
     adapter::MockResponse res1{};
 
     login_auth.execute(req1, res1);
     REQUIRE(res1.status == adapter::ResponseStatus::unauthorized);
 
     std::string body2 = R"({"username": "", "password": "password"})";
-    adapter::MockRequest<adapter::json> req2({.body = body2});
+    adapter::MockRequest req2({.body = body2});
     adapter::MockResponse res2{};
 
     login_auth.execute(req2, res2);
@@ -115,7 +115,7 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
         login_auth{&user_db, &store, &logger};
 
     std::string body = R"({"username": "username", "password": "password"})";
-    adapter::MockRequest<adapter::json> req({.body = body});
+    adapter::MockRequest req({.body = body});
     adapter::MockResponse res{};
 
     login_auth.execute(req, res);
@@ -137,7 +137,7 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
 
     std::string body =
         R"({"username": "username", "password": "some-random-password"})";
-    adapter::MockRequest<adapter::json> req({.body = body});
+    adapter::MockRequest req({.body = body});
     adapter::MockResponse res{};
 
     login_auth.execute(req, res);
@@ -148,7 +148,7 @@ TEST_CASE("Login Auth Use Case", "Use Case") {
 // NOLINTNEXTLINE
 TEST_CASE("Logout Auth Use Case", "Use Case") {
   SECTION("Successful Logout", "empty") {
-    adapter::MockRequest<std::nullopt_t> req(
+    adapter::MockRequest req(
         {.auth = true, .session_cleared = true}
     );
     adapter::MockResponse res{};
@@ -158,7 +158,7 @@ TEST_CASE("Logout Auth Use Case", "Use Case") {
   }
 
   SECTION("Not Authenticated", "empty") {
-    adapter::MockRequest<std::nullopt_t> req({.auth = false});
+    adapter::MockRequest req({.auth = false});
     adapter::MockResponse res{};
 
     logout_auth.execute(req, res);
@@ -168,7 +168,7 @@ TEST_CASE("Logout Auth Use Case", "Use Case") {
   SECTION("Could not clear session", "empty") {
     std::string username = "username";
     auto user = entity::make_user(username);
-    adapter::MockRequest<std::nullopt_t> req(
+    adapter::MockRequest req(
         {.user = **user, .auth = true, .session_cleared = false}
     );
     adapter::MockResponse res{};
@@ -178,7 +178,7 @@ TEST_CASE("Logout Auth Use Case", "Use Case") {
   }
 
   SECTION("No Segmentation error if no user is found", "empty") {
-    adapter::MockRequest<std::nullopt_t> req(
+    adapter::MockRequest req(
         {.auth = true, .session_cleared = false}
     );
     adapter::MockResponse res{};
@@ -199,7 +199,7 @@ TEST_CASE("Get User Auth Use Case", "Use Case") {
       {"username", username}
     };
     auto user = entity::make_user(id, username);
-    adapter::MockRequest<std::nullopt_t> req(
+    adapter::MockRequest req(
         {.user = **user, .auth = true}
     );
     adapter::MockResponse res{};
@@ -211,7 +211,7 @@ TEST_CASE("Get User Auth Use Case", "Use Case") {
   }
 
   SECTION("Unauthorized", "empty") {
-    adapter::MockRequest<std::nullopt_t> req(
+    adapter::MockRequest req(
         {.auth = false}
     );
     adapter::MockResponse res{};
@@ -221,7 +221,7 @@ TEST_CASE("Get User Auth Use Case", "Use Case") {
   }
 
   SECTION("Undefined user", "empty") {
-    adapter::MockRequest<std::nullopt_t> req(
+    adapter::MockRequest req(
         {.auth = true}
     );
     adapter::MockResponse res{};

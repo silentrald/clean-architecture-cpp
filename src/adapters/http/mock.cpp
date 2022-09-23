@@ -3,13 +3,6 @@
 
 namespace adapter {
 
-template <>
-[[nodiscard]] tl::expected<json*, entity::Log>
-MockRequest<json>::get_body_impl() noexcept {
-  this->body = std::make_unique<json>(json::parse(this->config.body));
-  return this->body.get();
-}
-
 void MockResponse::set_content_type_impl(const ContentType& type) noexcept {
   this->content_type = type;
 }

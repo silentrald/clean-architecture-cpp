@@ -2,6 +2,7 @@
 #define STORE_INTERFACE_MOCK_HPP
 
 #include "./build.hpp"
+#include <cstddef>
 #include <optional>
 
 namespace interface {
@@ -27,6 +28,7 @@ public:
   bool set_double_impl(const char* key, double val) noexcept;
   bool set_bool_impl(const char* key, bool val) noexcept;
   bool set_string_impl(const char* key, const char* val) noexcept;
+  /* bool set_string_impl(const char* key, const char* val, size_t size) noexcept; */
 
   bool exists_impl(const char* key) noexcept;
   bool del_impl(const char* key) noexcept;

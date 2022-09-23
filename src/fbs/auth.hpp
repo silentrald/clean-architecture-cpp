@@ -18,8 +18,8 @@ namespace fb {
 struct LoginRequest;
 struct LoginRequestBuilder;
 
-struct GetUserResponse;
-struct GetUserResponseBuilder;
+struct User;
+struct UserBuilder;
 
 struct LoginRequest FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef LoginRequestBuilder Builder;
@@ -86,8 +86,8 @@ inline flatbuffers::Offset<LoginRequest> CreateLoginRequestDirect(
       password__);
 }
 
-struct GetUserResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
-  typedef GetUserResponseBuilder Builder;
+struct User FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef UserBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_ID = 4,
     VT_USERNAME = 6
@@ -108,47 +108,77 @@ struct GetUserResponse FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   }
 };
 
-struct GetUserResponseBuilder {
-  typedef GetUserResponse Table;
+struct UserBuilder {
+  typedef User Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_id(flatbuffers::Offset<flatbuffers::String> id) {
-    fbb_.AddOffset(GetUserResponse::VT_ID, id);
+    fbb_.AddOffset(User::VT_ID, id);
   }
   void add_username(flatbuffers::Offset<flatbuffers::String> username) {
-    fbb_.AddOffset(GetUserResponse::VT_USERNAME, username);
+    fbb_.AddOffset(User::VT_USERNAME, username);
   }
-  explicit GetUserResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit UserBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<GetUserResponse> Finish() {
+  flatbuffers::Offset<User> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GetUserResponse>(end);
+    auto o = flatbuffers::Offset<User>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<GetUserResponse> CreateGetUserResponse(
+inline flatbuffers::Offset<User> CreateUser(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> id = 0,
     flatbuffers::Offset<flatbuffers::String> username = 0) {
-  GetUserResponseBuilder builder_(_fbb);
+  UserBuilder builder_(_fbb);
   builder_.add_username(username);
   builder_.add_id(id);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<GetUserResponse> CreateGetUserResponseDirect(
+inline flatbuffers::Offset<User> CreateUserDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *id = nullptr,
     const char *username = nullptr) {
   auto id__ = id ? _fbb.CreateString(id) : 0;
   auto username__ = username ? _fbb.CreateString(username) : 0;
-  return fb::CreateGetUserResponse(
+  return fb::CreateUser(
       _fbb,
       id__,
       username__);
+}
+
+inline const fb::LoginRequest *GetLoginRequest(const void *buf) {
+  return flatbuffers::GetRoot<fb::LoginRequest>(buf);
+}
+
+inline const fb::LoginRequest *GetSizePrefixedLoginRequest(const void *buf) {
+  return flatbuffers::GetSizePrefixedRoot<fb::LoginRequest>(buf);
+}
+
+inline bool VerifyLoginRequestBuffer(
+    flatbuffers::Verifier &verifier) {
+  return verifier.VerifyBuffer<fb::LoginRequest>(nullptr);
+}
+
+inline bool VerifySizePrefixedLoginRequestBuffer(
+    flatbuffers::Verifier &verifier) {
+  return verifier.VerifySizePrefixedBuffer<fb::LoginRequest>(nullptr);
+}
+
+inline void FinishLoginRequestBuffer(
+    flatbuffers::FlatBufferBuilder &fbb,
+    flatbuffers::Offset<fb::LoginRequest> root) {
+  fbb.Finish(root);
+}
+
+inline void FinishSizePrefixedLoginRequestBuffer(
+    flatbuffers::FlatBufferBuilder &fbb,
+    flatbuffers::Offset<fb::LoginRequest> root) {
+  fbb.FinishSizePrefixed(root);
 }
 
 }  // namespace fb

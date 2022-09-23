@@ -22,7 +22,7 @@ public:
 
   template <typename Req, typename Res>
   void execute(
-      adapter::IRequest<std::nullopt_t, Req>& req, adapter::IResponse<Res>& res
+      adapter::IRequest<Req>& req, adapter::IResponse<Res>& res
   ) noexcept {
     if (!req.is_auth()) {
       res.set_status(adapter::ResponseStatus::unauthorized);
