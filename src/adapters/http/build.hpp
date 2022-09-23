@@ -37,7 +37,7 @@ private:
   IRequest() = default;
 
 public:
-  [[nodiscard]] tl::expected<Body, entity::Log> get_body() noexcept {
+  [[nodiscard]] tl::expected<Body*, entity::Log> get_body() noexcept {
     return static_cast<T*>(this)->get_body_impl();
   }
 
@@ -63,7 +63,7 @@ public:
 
   friend T;
 
-  [[nodiscard]] tl::expected<Body, entity::Log>
+  [[nodiscard]] tl::expected<Body*, entity::Log>
   get_body_impl() noexcept = delete;
   [[nodiscard]] bool is_auth_impl() noexcept = delete;
   [[nodiscard]] std::string get_session_id_impl() noexcept = delete;

@@ -1,0 +1,12 @@
+namespace fb;
+
+table LoginRequest {
+  username: string;
+  password: string;
+}
+
+table GetUserResponse {
+  id: string;
+  username: string;
+}
+

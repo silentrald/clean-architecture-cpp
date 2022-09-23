@@ -21,6 +21,7 @@ template <typename Body>
 class MockRequest : public IRequest<Body, MockRequest<Body>> {
 private:
   MockRequestConfig config;
+  std::unique_ptr<Body> body;
 
 public:
   explicit MockRequest(
@@ -28,7 +29,7 @@ public:
   )
       : config(config) {}
 
-  [[nodiscard]] tl::expected<Body, entity::Log> get_body_impl() noexcept;
+  [[nodiscard]] tl::expected<Body*, entity::Log> get_body_impl() noexcept;
 
   [[nodiscard]] bool is_auth_impl() noexcept {
     return this->config.auth;

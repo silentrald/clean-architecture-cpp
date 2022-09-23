@@ -6,6 +6,7 @@
 #include "asio/high_resolution_timer.hpp"
 #include "entities/log/main.hpp"
 #include "entities/user/factory.hpp"
+#include "fbs/auth.hpp"
 #include "interfaces/logger/build.hpp"
 #include "interfaces/logger/singleton.hpp"
 #include "interfaces/store/singleton.hpp"
@@ -15,6 +16,7 @@
 #include "wrappers/http/response.hpp"
 #include <chrono>
 #include <exception>
+#include <flatbuffers/table.h>
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -31,14 +33,17 @@ const size_t ALPHABET_LEN = strlen(ALPHABET);
 const char* const SESSION_PREFIX = "sess:";
 const char* const SESSION_NAME = "SESSION";
 
-template <typename Body, typename Store = interface::DefStore, typename Logger = interface::DefLogger>
-class WrapperRequest : public IRequest<Body, WrapperRequest<Body, Store, Logger>> {
+template <
+    typename Body, typename Store = interface::DefStore,
+    typename Logger = interface::DefLogger>
+class WrapperRequest
+    : public IRequest<Body, WrapperRequest<Body, Store, Logger>> {
 private:
   http::server::request* req;
   http::server::response* res;
   interface::IStore<Store>* store;
   interface::ILogger<Logger>* logger;
-  json body;
+  std::unique_ptr<Body> body;
   std::chrono::system_clock::time_point start;
 
   [[nodiscard]] std::string get_session_key() noexcept;
@@ -69,7 +74,7 @@ public:
     this->start = std::chrono::high_resolution_clock::now();
   }
 
-  [[nodiscard]] tl::expected<Body, entity::Log> get_body_impl() noexcept;
+  [[nodiscard]] tl::expected<Body*, entity::Log> get_body_impl() noexcept;
 
   /* [[nodiscard]] std::vector<std::string> get_params() const; */
 
@@ -106,14 +111,20 @@ public:
 };
 
 template <typename Body, typename Store, typename Logger>
-[[nodiscard]] tl::expected<Body, entity::Log>
+[[nodiscard]] tl::expected<Body*, entity::Log>
 WrapperRequest<Body, Store, Logger>::get_body_impl() noexcept {
   return tl::unexpected<entity::Log>({.msg = "Invalid"});
 }
 
 template <>
-[[nodiscard]] tl::expected<json, entity::Log>
-WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl() noexcept;
+[[nodiscard]] tl::expected<json*, entity::Log>
+WrapperRequest<json, interface::DefStore, interface::DefLogger>::get_body_impl(
+) noexcept;
+
+template <>
+[[nodiscard]] tl::expected<fb::LoginRequest*, entity::Log>
+WrapperRequest<fb::LoginRequest, interface::DefStore, interface::DefLogger>::
+    get_body_impl() noexcept;
 
 template <typename Body, typename Store, typename Logger>
 [[nodiscard]] std::string
@@ -136,7 +147,8 @@ WrapperRequest<Body, Store, Logger>::get_session_id_impl() noexcept {
 }
 
 template <typename Body, typename Store, typename Logger>
-[[nodiscard]] bool WrapperRequest<Body, Store, Logger>::is_auth_impl() noexcept {
+[[nodiscard]] bool
+WrapperRequest<Body, Store, Logger>::is_auth_impl() noexcept {
   return this->store->exists(this->get_session_key());
 }
 
@@ -148,11 +160,9 @@ WrapperRequest<Body, Store, Logger>::get_session_key() noexcept {
 
 template <typename Body, typename Store, typename Logger>
 std::optional<entity::Log>
-WrapperRequest<Body, Store, Logger>::set_session_user_impl(entity::User* user) noexcept {
-  json user_json = {
-    {"id", user->get_id()},
-    {"username", user->get_username()}
-  };
+WrapperRequest<Body, Store, Logger>::set_session_user_impl(entity::User* user
+) noexcept {
+  json user_json = {{"id", user->get_id()}, {"username", user->get_username()}};
   this->store->set_string(this->get_session_key(), user_json.dump());
   this->res->cookies.emplace_back(http::server::cookie{
       .name = "SESSION",

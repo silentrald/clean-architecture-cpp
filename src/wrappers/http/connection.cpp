@@ -93,7 +93,9 @@ void connection::handle_header_buffer(std::size_t bytes_transferred) {
   if (result == request_parser::good) {
     for (auto& h : this->req.headers) {
       if (h.name == "Content-Length") {
-        this->req.content_len = std::strtoul(h.value.c_str(), nullptr, BASE);
+        this->req.content_len = std::stoi(h.value);
+      } else if (h.name == "Content-Type") {
+        this->req.content_type = h.value;
       } else if (h.name == "Cookie") {
         this->parse_cookie(h.value);
       }

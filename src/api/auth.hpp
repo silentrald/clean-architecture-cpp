@@ -3,6 +3,7 @@
 
 #include "adapters/http/factory.hpp"
 #include "adapters/http/wrapper.hpp"
+#include "fbs/auth.hpp"
 #include "use-cases/auth/singleton.hpp"
 #include "wrappers/http/request.hpp"
 #include "wrappers/http/response.hpp"
@@ -30,6 +31,13 @@ private:
       .path = "/auth/login",
       .cb = [](http::server::request* req,
                http::server::response* res) noexcept {
+        if (req->content_type == "application/flatbuffers") {
+          adapter::WrapperRequest<fb::LoginRequest> areq(req, res);
+          adapter::WrapperResponse ares(res);
+          use_case::login_auth()->execute(areq, ares);
+          return;
+        }
+
         adapter::WrapperRequest<adapter::json> areq(req, res);
         adapter::WrapperResponse ares(res);
         use_case::login_auth()->execute(areq, ares);
