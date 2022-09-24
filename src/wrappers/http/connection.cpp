@@ -19,11 +19,11 @@
 #include "asio/write.hpp"
 #include "connection_manager.hpp"
 #include "request_handler.hpp"
+#include "utils/string.hpp"
 #include "wrappers/http/cookie.hpp"
 #include "wrappers/http/request.hpp"
 #include "wrappers/http/response.hpp"
 #include <cstddef>
-#include <iostream>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -91,13 +91,22 @@ void connection::handle_header_buffer(std::size_t bytes_transferred) {
   );
 
   if (result == request_parser::good) {
+    int i = 0;
     for (auto& h : this->req.headers) {
-      if (h.name == "Content-Length") {
+      if (this->req.content_len == -1 &&
+          utils::string::iequals(h.name, "content-length")) {
         this->req.content_len = std::stoi(h.value);
-      } else if (h.name == "Content-Type") {
+        i++;
+      } else if (this->req.content_type.empty() && utils::string::iequals(h.name, "content-type")) {
         this->req.content_type = h.value;
-      } else if (h.name == "Cookie") {
+        i++;
+      } else if (this->req.cookies.empty() && utils::string::iequals(h.name, "cookie")) {
         this->parse_cookie(h.value);
+        i++;
+      }
+
+      if (i > 2) {
+        break;
       }
     }
 
@@ -165,7 +174,6 @@ void connection::do_read() {
 
         /* if (ec == asio::error::eof) { */
         // Add a timer here
-        /* std::cout << "Rereading\n"; */
         /* this->do_read(); */
         /* return; */
         /* } */

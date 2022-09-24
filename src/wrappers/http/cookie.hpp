@@ -20,7 +20,7 @@ struct cookie {
       return this->cookie_value;
     }
 
-    if (this->name.empty() || this->value.empty()) {
+    if (this->name.empty()) {
       this->cookie_value = "";
       return this->cookie_value;
     }

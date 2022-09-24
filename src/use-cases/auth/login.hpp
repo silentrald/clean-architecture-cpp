@@ -48,12 +48,17 @@ private:
       flatbuffers::Verifier verifier{(uint8_t*)body.data(), body.size()};
       const auto* buffer = flatbuffers::GetRoot<fb::LoginRequest>(body.data());
       if (!buffer->Verify(verifier)) {
+        this->logger->debug(buffer->password()->c_str());
+      }
+
+      const auto* username = buffer->username();
+      const auto* password = buffer->password();
+      if (username == nullptr || password == nullptr) {
         return tl::unexpected<entity::Log>({.msg = "Invalid body"});
       }
 
       return LoginAuthBody{
-          .username = buffer->username()->c_str(),
-          .password = buffer->password()->c_str()};
+          .username = username->c_str(), .password = password->c_str()};
     }
 
     try {

@@ -81,33 +81,11 @@ public:
 
   // Session Functions
 
-  /**
-   * Checks whether the user is authenticated
-   */
   [[nodiscard]] bool is_auth_impl() noexcept;
-
-  /**
-   * Gets the session id of the user
-   */
   [[nodiscard]] std::string get_session_id_impl() noexcept;
-
-  /**
-   * Sets the user session to the store
-   */
+  [[nodiscard]] std::string get_new_session_id_impl() noexcept;
   std::optional<entity::Log> set_session_user_impl(entity::User* user) noexcept;
-
-  /**
-   * Gets the user from the session store
-   *
-   * @returns user without the password/hash fields
-   */
   std::unique_ptr<entity::User> get_session_user_impl() noexcept;
-
-  /**
-   * Clears the user from the session store
-   *
-   * @returns true if the session was cleared else false
-   */
   bool clear_session_user_impl() noexcept;
 };
 
@@ -143,6 +121,28 @@ WrapperRequest<Store, Logger>::get_session_id_impl() noexcept {
   return ref;
 }
 
+// TODO: Add a fail case if the user cant create a new session id
+template <typename Store, typename Logger>
+[[nodiscard]] std::string
+WrapperRequest<Store, Logger>::get_new_session_id_impl() noexcept {
+  std::string& ref = this->req->session_id;
+  std::vector<uint64_t> buffer{};
+  buffer.reserve(SESSION_ID_LENGTH);
+
+  do {
+    ref = "";
+    // NOTE: Can be changed to libsodium
+    uint bytes =
+        getrandom(buffer.data(), SESSION_ID_LENGTH * sizeof(uint64_t), 0);
+    for (uint i = 0; i < SESSION_ID_LENGTH; i++) {
+      ref.push_back(ALPHABET[buffer[i] % ALPHABET_LEN]); // NOLINT
+    }
+    // Collision Check
+  } while (this->store->exists(this->get_session_key()));
+  
+  return ref;
+}
+
 template <typename Store, typename Logger>
 [[nodiscard]] bool WrapperRequest<Store, Logger>::is_auth_impl() noexcept {
   return this->store->exists(this->get_session_key());
@@ -164,13 +164,16 @@ WrapperRequest<Store, Logger>::set_session_user_impl(entity::User* user
   auto offset = fb::CreateUser(builder, id, username);
   builder.Finish(offset);
 
-  const auto* sample = flatbuffers::GetRoot<fb::User>(builder.GetBufferPointer());
+  const auto* sample =
+      flatbuffers::GetRoot<fb::User>(builder.GetBufferPointer());
+
+  std::string sid = this->get_new_session_id_impl();
   this->store->set_byte_array(
       this->get_session_key(), builder.GetBufferPointer(), builder.GetSize()
   );
   this->res->cookies.emplace_back(http::server::cookie{
-      .name = "SESSION",
-      .value = this->get_session_id_impl(),
+      .name = SESSION_NAME,
+      .value = sid,
       .path = "/",
       .same_site = "strict",
       .max_age = 3600,
@@ -203,7 +206,18 @@ WrapperRequest<Store, Logger>::get_session_user_impl() noexcept {
 
 template <typename Store, typename Logger>
 bool WrapperRequest<Store, Logger>::clear_session_user_impl() noexcept {
-  return this->store->del(this->get_session_key());
+  bool cleared = this->store->del(this->get_session_key());
+  if (cleared) {
+    this->res->cookies.push_back(
+        {.name = SESSION_NAME,
+         .path = "/",
+         .same_site = "strict",
+         .max_age = 0,
+         .secure = false,
+         .http_only = false}
+    );
+  }
+  return cleared;
 }
 
 //// RESPONSE ////

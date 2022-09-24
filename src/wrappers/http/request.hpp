@@ -24,7 +24,7 @@ struct request {
   std::string uri;
   int http_version_major;
   int http_version_minor;
-  int content_len;
+  int content_len = -1;
   std::string content_type;
   std::string body;
   std::string session_id;

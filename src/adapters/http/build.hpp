@@ -52,6 +52,9 @@ public:
   [[nodiscard]] std::string get_session_id() noexcept {
     return static_cast<T*>(this)->get_session_id_impl();
   }
+  [[nodiscard]] std::string get_new_session_id() noexcept {
+    return static_cast<T*>(this)->get_new_session_id_impl();
+  }
 
   std::optional<entity::Log> set_session_user(entity::User* user) noexcept {
     return static_cast<T*>(this)->set_session_user_impl(user);
@@ -71,6 +74,7 @@ public:
   [[nodiscard]] std::string get_body_impl() noexcept = delete;
   [[nodiscard]] bool is_auth_impl() noexcept = delete;
   [[nodiscard]] std::string get_session_id_impl() noexcept = delete;
+  [[nodiscard]] std::string get_new_session_id_impl() noexcept = delete;
   std::optional<entity::User> get_session_user_impl() noexcept = delete;
   std::optional<entity::Log> set_session_user_impl(entity::User* user
   ) noexcept = delete;
