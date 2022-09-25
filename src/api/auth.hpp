@@ -47,9 +47,20 @@ private:
         use_case::logout_auth()->execute(areq, ares);
       }};
 
+  const http::server::router register_auth_rtr{
+      .method = "POST",
+      .path = "/auth/register",
+      .cb = [](http::server::request* req,
+               http::server::response* res) noexcept {
+        adapter::WrapperRequest areq(req, res);
+        adapter::WrapperResponse ares(res);
+        use_case::register_auth()->execute(areq, ares);
+      }};
+
 public:
   std::vector<http::server::router> get_routers() {
-    return {get_user_auth_rtr, login_auth_rtr, logout_auth_rtr};
+    return {
+        get_user_auth_rtr, login_auth_rtr, logout_auth_rtr, register_auth_rtr};
   }
 };
 

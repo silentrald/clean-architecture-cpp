@@ -17,10 +17,16 @@ public:
     return static_cast<T*>(this)->get_user_by_username_impl(username);
   }
 
+  tl::expected<std::string, entity::Log> add_user(entity::User* user) noexcept {
+    return static_cast<T*>(this)->add_user_impl(user);
+  }
+
   friend T;
 
   tl::expected<std::shared_ptr<entity::User>, entity::Log>
   get_user_by_username_impl(std::string& username) noexcept = delete;
+  tl::expected<std::string, entity::Log> add_user_impl(entity::User* user
+  ) noexcept = delete;
 };
 } // namespace db
 

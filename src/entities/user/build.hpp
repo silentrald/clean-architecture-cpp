@@ -32,7 +32,7 @@ public:
 
   explicit IUser(std::string& username) : username(username) {}
 
-  std::optional<Log> set_password(std::string& password) noexcept;
+  [[nodiscard]] std::optional<Log> set_password(std::string& password) noexcept;
 
   // GETTERS
   [[nodiscard]] const std::string& get_id() const;
@@ -48,7 +48,7 @@ const char* const USER_ENTITY_FILE = "entities/user/build.hpp";
 
 // Implementation
 template <class IUserCrypto>
-std::optional<entity::Log>
+[[nodiscard]] std::optional<entity::Log>
 IUser<IUserCrypto>::set_password(std::string& password) noexcept {
 
   uint len = password.size();

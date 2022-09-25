@@ -237,6 +237,7 @@ public:
 
   void set_content_type_impl(const ContentType& type) noexcept;
   template <typename Body> void set_body_impl(const Body& body) noexcept;
+  void set_body_impl(const char* body) noexcept;
   void set_status_impl(const ResponseStatus& status) noexcept;
 };
 

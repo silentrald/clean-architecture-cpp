@@ -6,13 +6,15 @@
 #include "./user.hpp"
 #include "interfaces/logger/dev.hpp"
 #include "interfaces/logger/singleton.hpp"
+#include "use-cases/auth/register.hpp"
 #include <memory>
 #include <mutex>
 
 namespace use_case {
-UserAuthUseCase<>* get_user_auth();
-LoginAuthUseCase<>* login_auth();
-LogoutAuthUseCase<>* logout_auth();
+UserAuthUseCase<>* get_user_auth() noexcept;
+LoginAuthUseCase<>* login_auth() noexcept;
+LogoutAuthUseCase<>* logout_auth() noexcept;
+RegisterAuthUseCase<>* register_auth() noexcept;
 } // namespace use_case
 
 #endif

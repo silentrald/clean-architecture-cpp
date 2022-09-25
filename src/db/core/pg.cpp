@@ -1,5 +1,7 @@
 #include "./pg.hpp"
+#include <cstddef>
 #include <libpq-fe.h>
+#include <postgres_ext.h>
 
 namespace db {
 // Result
@@ -195,8 +197,12 @@ tl::expected<std::shared_ptr<PostgresResult>, entity::Log> Postgres::query(
 
   const char* err = PQresultErrorMessage(result);
   if (*err != '\0') {
-    entity::Log log{
-        .msg = err, .file = "db/core/pg.hpp", .function = "Postgres::query"};
+    entity::Log log{.msg=err, .file = "db/core/pg.hpp", .function = "Postgres::query"};
+
+    char* tmp = PQresultErrorField(result, PG_DIAG_CONSTRAINT_NAME);
+    if (tmp != nullptr) {
+      log.db_contraint = tmp;
+    }
     PQclear(result);
     return tl::unexpected<entity::Log>(log);
   }
@@ -205,7 +211,7 @@ tl::expected<std::shared_ptr<PostgresResult>, entity::Log> Postgres::query(
 }
 
 tl::expected<PostgresStatement, entity::Log> Postgres::prepare(
-    const std::string& query, int num_params,
+    const std::string& query, size_t num_params,
     const std::vector<uint>& param_types
 ) noexcept {
   return PostgresStatement{

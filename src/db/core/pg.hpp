@@ -4,6 +4,7 @@
 #include "entities/log/main.hpp"
 #include "interfaces/logger/singleton.hpp"
 #include "tl/expected.hpp"
+#include <cstddef>
 #include <deque>
 #include <exception>
 #include <functional>
@@ -63,7 +64,7 @@ struct PostgresStatement {
   std::string name;
   std::string query;
   std::vector<uint> param_types;
-  int num_params;
+  size_t num_params;
 };
 
 /**
@@ -108,7 +109,7 @@ public:
   ) noexcept;
 
   tl::expected<PostgresStatement, entity::Log> prepare(
-      const std::string& query, int num_params,
+      const std::string& query, size_t num_params,
       const std::vector<uint>& param_types
   ) noexcept;
 

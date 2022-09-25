@@ -20,6 +20,7 @@ struct Log {
   std::string file;
   std::string function;
   std::string db; // Db Names
+  std::string db_contraint;
   std::vector<std::string> errors;
 
   [[nodiscard("Log the error")]] std::string to_string() const {
@@ -35,6 +36,9 @@ struct Log {
 
     if (!this->db.empty()) {
       str.append("\n> Db: " + this->db);
+      if (!this->db_contraint.empty()) {
+        str.append(" -> Constraint: " + this->db_contraint);
+      }
     }
 
     if (!this->errors.empty()) {

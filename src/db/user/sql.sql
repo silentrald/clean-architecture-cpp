@@ -1,8 +1,9 @@
 
 CREATE TABLE IF NOT EXISTS users (
   id        UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
-  username  VARCHAR(50)   UNIQUE NOT NULL,
-  password  VARCHAR(150)  NOT NULL
+  username  VARCHAR(50)   NOT NULL,
+  password  VARCHAR(150)  NOT NULL,
+  CONSTRAINT users_username_key UNIQUE(username)
 );
 
 INSERT INTO users(username, password)

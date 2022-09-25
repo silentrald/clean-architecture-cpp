@@ -95,6 +95,10 @@ public:
     return static_cast<T*>(this)->set_body_impl(body);
   }
 
+  void set_body(const char* body) noexcept {
+    return static_cast<T*>(this)->set_body_impl(body);
+  }
+
   void set_status(const ResponseStatus& status) noexcept {
     static_cast<T*>(this)->set_status_impl(status);
   }
@@ -104,6 +108,7 @@ public:
   void set_content_type_impl(const ContentType& type) noexcept = delete;
   template <typename Body>
   void set_body_impl(const Body& body) noexcept = delete;
+  void set_body_impl(const char* body) noexcept = delete;
   void set_status_impl(const ResponseStatus& status) noexcept = delete;
 };
 

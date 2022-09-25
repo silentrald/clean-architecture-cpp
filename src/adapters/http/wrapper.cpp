@@ -12,6 +12,7 @@
 #include <flatbuffers/verifier.h>
 #include <memory>
 #include <optional>
+#include <string>
 
 namespace adapter {
 // Response
@@ -31,7 +32,22 @@ void WrapperResponse::set_content_type_impl(const ContentType& type) noexcept {
 template <>
 void WrapperResponse::set_body_impl(const std::string& body) noexcept {
   this->res->content = body;
-  this->res->content_length = std::to_string(body.length());
+  this->res->content_length = std::to_string(body.size());
+}
+
+template <>
+void WrapperResponse::set_body_impl(const std::vector<std::string>& body) noexcept {
+  this->res->content = '[';
+  for (const std::string& row : body) {
+    this->res->content.append('"' + row + "\",");
+  }
+  this->res->content.back() = ']';
+  this->res->content_length = std::to_string(this->res->content.size());
+}
+
+void WrapperResponse::set_body_impl(const char* body) noexcept {
+  this->res->content = body;
+  this->res->content_length = std::to_string(this->res->content.size());
 }
 
 void WrapperResponse::set_status_impl(const ResponseStatus& status) noexcept {
