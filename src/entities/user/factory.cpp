@@ -1,13 +1,16 @@
 #include "./factory.hpp"
 #include "entities/user/build.hpp"
+#include "utils/string.hpp"
 
 const int USERNAME_MIN = 8;
 const int USERNAME_MAX = 60;
 
 /**
- * Validates the username of the user
+ * Sanitizes and Validates the username of the user
  */
-const char* validate_username(const std::string& username) {
+const char* validate_username(std::string& username) {
+  utils::string::trim(username);
+
   if (username.length() < USERNAME_MIN) {
     return "username: min";
   }

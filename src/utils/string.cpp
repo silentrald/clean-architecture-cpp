@@ -1,10 +1,13 @@
 #include "./string.hpp"
 #include "entities/log/main.hpp"
 #include "tl/expected.hpp"
+#include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <exception>
 #include <iostream>
 #include <string>
+#include <sys/types.h>
 #include <vector>
 
 namespace utils::string {
@@ -48,6 +51,26 @@ bool iequals(const std::string& s1, const std::string& s2) noexcept {
       s1.begin(), s1.end(), s2.begin(), s2.end(),
       [](char c1, char c2) { return tolower(c1) == c2; }
   );
+}
+
+void ltrim(std::string& s) noexcept {
+  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](u_char c) {
+            return std::isspace(c) == 0;
+          }));
+}
+
+void rtrim(std::string& s) noexcept {
+  s.erase(
+      std::find_if(
+          s.rbegin(), s.rend(), [](u_char c) { return std::isspace(c) == 0; }
+      ).base(),
+      s.end()
+  );
+}
+
+void trim(std::string& s) noexcept {
+  ltrim(s);
+  rtrim(s);
 }
 
 } // namespace utils::string
